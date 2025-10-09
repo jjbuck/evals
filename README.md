@@ -46,14 +46,23 @@ from strands_evals.evaluators import OutputEvaluator
 # 1. Define a task function
 def get_response(query: str) -> str:
     agent = Agent(callback_handler=None)
-    return str(agent(query))
+
+    # Extract trace from response
+    for trace in agent_response.metrics.traces:
+        traces.append(trace.to_dict())
+
+    # mapped_trace = Mapper(trace) # Don't do this
+    return {
+        'trajectory': trace
+        ...
+    }
 
 # 2. Create test cases
 test_cases = [
     Case[str, str](
         name="knowledge-1",
         input="What is the capital of France?",
-        expected_output="The capital of France is Paris.",
+        #expected_output="The capital of France is Paris.",
         metadata={"category": "knowledge"}
     ),
     Case[str, str](
@@ -64,14 +73,13 @@ test_cases = [
 ]
 
 # 3. Create an evaluator
-evaluator = OutputEvaluator(
-    rubric="The output should represent a reasonable answer to the input."
-)
+evaluator = HelpfulnessEvaluator()
 
 # 4. Create a dataset
 dataset = Dataset[str, str](
     cases=test_cases,
-    evaluator=evaluator
+    evaluator=evaluator,
+    mapper=Mapper() # Don't need to explicitly include
 )
 
 # 5. Run evaluations
