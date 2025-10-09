@@ -1,8 +1,10 @@
 import inspect
 
-from typing_extensions import Generic, TypeVar
+from typing_extensions import Any, Generic, TypeVar
 
 from ..types.evaluation import EvaluationData, EvaluationOutput
+from ..types.trace import Session, AgentInvocationSpan, ToolExecutionSpan
+from ..types.trace import EvaluationLevel, TurnLevelInput, ToolLevelInput
 
 InputT = TypeVar("InputT")
 OutputT = TypeVar("OutputT")
@@ -15,6 +17,9 @@ class Evaluator(Generic[InputT, OutputT]):
     Evaluators can assess the performance of a task on all test cases.
     Subclasses must implement the `evaluate` method.
     """
+
+    # Optional: subclasses can set this to enable trace parsing
+    evaluation_level: EvaluationLevel | None = None
 
     def evaluate(self, evaluation_case: EvaluationData[InputT, OutputT]) -> EvaluationOutput:
         """
@@ -41,6 +46,63 @@ class Evaluator(Generic[InputT, OutputT]):
         raise NotImplementedError(
             "This method should be implemented in subclasses, especially if you want to run evaluations asynchronously."
         )
+    
+    def _parse_turn_level(self, session: Session) -> TurnLevelInput | None:
+        """Extract turn-level data from Session."""
+        conversation_history = []
+        last_turn = None
+        
+        for trace in session.traces:
+            for span in trace.spans:
+                if isinstance(span, AgentInvocationSpan):
+                    if last_turn:
+                        conversation_history.append({
+                            "user": last_turn.user_prompt,
+                            "assistant": last_turn.agent_response
+                        })
+                    last_turn = span
+        
+        if not last_turn:
+            return None
+        
+        return TurnLevelInput(
+            user_prompt=last_turn.user_prompt,
+            agent_response=last_turn.agent_response,
+            conversation_history=conversation_history
+        )
+    
+    def _parse_tool_level(self, session: Session, user_query: str = "") -> list[ToolLevelInput]:
+        """Extract tool-level data from Session."""
+        tool_inputs = []
+        
+        for trace in session.traces:
+            for span in trace.spans:
+                if isinstance(span, ToolExecutionSpan):
+                    tool_inputs.append(ToolLevelInput(
+                        tool_name=span.tool_call.name,
+                        parameters=span.tool_call.parameters,
+                        result=span.tool_result.content,
+                        user_query=user_query
+                    ))
+        
+        return tool_inputs
+    
+    def _parse_trajectory(self, evaluation_case: EvaluationData[InputT, OutputT]) -> Any:
+        """Parse Session trajectory based on evaluation level."""
+        trajectory = evaluation_case.actual_trajectory
+        
+        if not isinstance(trajectory, Session):
+            raise TypeError(
+                f"Trace parsing requires actual_trajectory to be a Session object, "
+                f"got {type(trajectory).__name__}."
+            )
+        
+        if self.evaluation_level == EvaluationLevel.TURN_LEVEL:
+            return self._parse_turn_level(trajectory)
+        elif self.evaluation_level == EvaluationLevel.TOOL_LEVEL:
+            return self._parse_tool_level(trajectory, str(evaluation_case.input))
+        else:
+            raise ValueError(f"Unsupported evaluation level: {self.evaluation_level}")
 
     @classmethod
     def get_type_name(cls) -> str:
