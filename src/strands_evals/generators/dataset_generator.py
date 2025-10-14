@@ -1,4 +1,5 @@
 import asyncio
+import math
 
 from pydantic import create_model
 from strands import Agent
@@ -11,6 +12,7 @@ from strands_evals.evaluators.trajectory_evaluator import TrajectoryEvaluator
 
 from ..case import Case
 from ..dataset import Dataset
+from .topic_planner import TopicPlanner
 from ..types.evaluation import Interaction
 from .prompt_template.prompt_templates import generate_case_template as CASE_SYSTEM_PROMPT
 from .prompt_template.prompt_templates import generate_rubric_template as RUBRIC_SYSTEM_PROMPT
@@ -121,7 +123,7 @@ class DatasetGenerator(Generic[InputT, OutputT]):
             finally:
                 queue.task_done()
 
-    async def generate_cases_async(self, prompt: str, num_cases: int = 5, message_history: list = None) -> list[Case]:
+    async def generate_cases_async(self, prompt: str, num_cases: int = 5, message_history: list = None, num_topics: int = None) -> list[Case]:
         """
         Generate test cases asynchronously using parallel workers.
 
@@ -129,10 +131,111 @@ class DatasetGenerator(Generic[InputT, OutputT]):
             prompt: Generation prompt describing the test case requirements
             num_cases: Number of test cases to generate
             message_history: Optional conversation history to provide context to the generation agent
+            num_topics: Optional number of topics for diverse coverage.
+                If None, generates all cases from the single prompt.
+                If specified, expands prompt into multiple topic-specific prompts.
 
         Returns:
             List of generated Case objects matching the configured schema
         """
+        prompt_specs = await self._prepare_generation_prompts(
+            base_prompt=prompt,
+            num_cases=num_cases,
+            num_topics=num_topics
+        )
+
+        all_cases = []
+        for prompt_text, cases_for_prompt in prompt_specs:
+            cases = await self._generate_batch(
+                prompt=prompt_text,
+                num_cases=cases_for_prompt,
+                message_history=message_history
+            )
+            all_cases.extend(cases)
+        
+        return all_cases[:num_cases]
+    
+    async def _prepare_generation_prompts(
+        self,
+        base_prompt: str,
+        num_cases: int,
+        num_topics: int = None
+    ) -> list[tuple[str, int]]:
+        """
+        Prepare generation prompts, optionally expanding via topic planning.
+        
+        Returns:
+            List of (prompt, num_cases) tuples. Always returns at least one prompt.
+        """
+        if num_topics is None:
+            return [(base_prompt, num_cases)]
+        
+        topic_planner = TopicPlanner(model=self.model)
+        
+        try:
+            topic_plan = await topic_planner.plan_topics_async(
+                context=base_prompt,
+                task_description="",
+                num_topics=num_topics,
+                num_cases=num_cases
+            )
+        except Exception as e:
+            print(f"Topic planning failed: {e}. Using single prompt.")
+            return [(base_prompt, num_cases)]
+        
+        # Distribute cases across topics
+        cases_per_topic = math.ceil(num_cases / len(topic_plan.topics))
+        prompt_specs = []
+        
+        for topic in topic_plan.topics:
+            remaining = num_cases - sum(count for _, count in prompt_specs)
+            if remaining <= 0:
+                break
+                
+            topic_cases = min(cases_per_topic, remaining)
+            topic_prompt = f"""{base_prompt}
+
+    Focus on this topic:
+    - {topic.title}: {topic.description}
+    - Key aspects: {', '.join(topic.key_aspects)}"""
+            
+            prompt_specs.append((topic_prompt, topic_cases))
+        
+        return prompt_specs
+    
+    async def _generate_batch(
+        self,
+        prompt: str,
+        num_cases: int,
+        message_history: list = None
+    ) -> list[Case]:
+        """Generate a batch of cases using the existing worker pattern."""
+        queue = asyncio.Queue()
+        generated_cases = []
+
+        for i in range(num_cases):
+            difficulty = "medium"
+            if i < num_cases * 0.3:
+                difficulty = "easy"
+            elif i > num_cases * 0.8:
+                difficulty = "hard"
+            queue.put_nowait(difficulty)
+
+        num_workers = min(self.max_parallel_num_cases, num_cases)
+        workers = [
+            asyncio.create_task(
+                self._case_worker(queue, prompt, message_history, generated_cases)
+            )
+            for _ in range(num_workers)
+        ]
+
+        await queue.join()
+        for worker in workers:
+            worker.cancel()
+        await asyncio.gather(*workers, return_exceptions=True)
+
+        return generated_cases
+
         queue = asyncio.Queue()
         generated_cases = []
 
@@ -233,7 +336,7 @@ class DatasetGenerator(Generic[InputT, OutputT]):
             return Dataset(cases=cases)
 
     async def from_context_async(
-        self, context: str, task_description: str, num_cases: int = 5, evaluator: Evaluator = None
+        self, context: str, task_description: str, num_cases: int = 5, evaluator: Evaluator = None, num_topics: int = None,
     ) -> Dataset:
         """
         Generate a dataset based on specific context that test cases should reference.
@@ -247,6 +350,7 @@ class DatasetGenerator(Generic[InputT, OutputT]):
             task_description: Description of the task the AI system will perform
             num_cases: Number of test cases to generate
             evaluator: Optional evaluator class for assessment (generates rubric if provided), use Evaluator() as a placeholder.
+            num_topics: Optional number of topics for diverse coverage
 
         Returns:
             Dataset containing context-based test cases and evaluator. Use the generic Evaluator as placeholder if no evaluator is passed in.
@@ -254,6 +358,7 @@ class DatasetGenerator(Generic[InputT, OutputT]):
         cases = await self.generate_cases_async(
             f"""Create test cases with the following context: {context}. Ensure that the questions can be answer using the provided context for this task: {task_description} """,
             num_cases=num_cases,
+            num_topics=num_topics
         )
         if evaluator:
             _evaluator = await self.construct_evaluator_async(
