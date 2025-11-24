@@ -2,7 +2,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 from strands import Agent
-from typing_extensions import TypeVar
+from strands.models.model import Model
+from typing_extensions import TypeVar, Union
 
 from ..types.evaluation import EvaluationData, EvaluationOutput
 from ..types.trace import EvaluationLevel, TextContent, ToolExecution, TraceLevelInput
@@ -50,7 +51,7 @@ class HelpfulnessEvaluator(Evaluator[InputT, OutputT]):
     def __init__(
         self,
         version: str = "v0",
-        model: str | None = None,
+        model: Union[Model, str, None] = None,
         system_prompt: str | None = None,
         include_inputs: bool = True,
     ):
@@ -66,7 +67,12 @@ class HelpfulnessEvaluator(Evaluator[InputT, OutputT]):
         evaluator_agent = Agent(model=self.model, system_prompt=self.system_prompt, callback_handler=None)
         rating = evaluator_agent.structured_output(HelpfulnessRating, prompt)
         normalized_score = self._score_mapping[rating.score]
-        result = EvaluationOutput(score=normalized_score, test_pass=normalized_score >= 0.5, reason=rating.reasoning)
+        result = EvaluationOutput(
+            score=normalized_score,
+            test_pass=normalized_score >= 0.5,
+            reason=rating.reasoning,
+            label=rating.score,
+        )
         return [result]
 
     async def evaluate_async(self, evaluation_case: EvaluationData[InputT, OutputT]) -> list[EvaluationOutput]:
@@ -75,7 +81,12 @@ class HelpfulnessEvaluator(Evaluator[InputT, OutputT]):
         evaluator_agent = Agent(model=self.model, system_prompt=self.system_prompt, callback_handler=None)
         rating = await evaluator_agent.structured_output_async(HelpfulnessRating, prompt)
         normalized_score = self._score_mapping[rating.score]
-        result = EvaluationOutput(score=normalized_score, test_pass=normalized_score >= 0.5, reason=rating.reasoning)
+        result = EvaluationOutput(
+            score=normalized_score,
+            test_pass=normalized_score >= 0.5,
+            reason=rating.reasoning,
+            label=rating.score,
+        )
         return [result]
 
     def _get_last_turn(self, evaluation_case: EvaluationData[InputT, OutputT]) -> TraceLevelInput:

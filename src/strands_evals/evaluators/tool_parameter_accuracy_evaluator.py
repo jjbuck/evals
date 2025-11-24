@@ -2,7 +2,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 from strands import Agent
-from typing_extensions import TypeVar
+from strands.models.model import Model
+from typing_extensions import TypeVar, Union
 
 from ..types.evaluation import EvaluationData, EvaluationOutput
 from ..types.trace import EvaluationLevel, ToolLevelInput
@@ -40,7 +41,7 @@ class ToolParameterAccuracyEvaluator(Evaluator[InputT, OutputT]):
     def __init__(
         self,
         version: str = "v0",
-        model: str | None = None,
+        model: Union[Model, str, None] = None,
         system_prompt: str | None = None,
     ):
         super().__init__()
@@ -58,7 +59,7 @@ class ToolParameterAccuracyEvaluator(Evaluator[InputT, OutputT]):
             rating = evaluator_agent.structured_output(ToolParameterAccuracyRating, prompt)
             normalized_score = self._score_mapping[rating.score]
             result = EvaluationOutput(
-                score=normalized_score, test_pass=normalized_score == 1.0, reason=rating.reasoning
+                score=normalized_score, test_pass=normalized_score == 1.0, reason=rating.reasoning, label=rating.score
             )
             results.append(result)
 
@@ -74,7 +75,7 @@ class ToolParameterAccuracyEvaluator(Evaluator[InputT, OutputT]):
             rating = await evaluator_agent.structured_output_async(ToolParameterAccuracyRating, prompt)
             normalized_score = self._score_mapping[rating.score]
             result = EvaluationOutput(
-                score=normalized_score, test_pass=normalized_score == 1.0, reason=rating.reasoning
+                score=normalized_score, test_pass=normalized_score == 1.0, reason=rating.reasoning, label=rating.score
             )
             results.append(result)
 
