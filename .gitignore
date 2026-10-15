@@ -17,3 +17,9 @@ report_files
 *.DS_Store*
 uv.lock
 .claude
+
+# strands_evals.optimization records written by examples and fixtures
+studies/
+explorer/node_modules/
+explorer/dist/
+explorer/dist-embed/
