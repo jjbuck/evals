@@ -1,0 +1,94 @@
+Analyze the trajectories and improve the parameters below. Each one says what it is and how to change it.
+
+## Inputs
+
+**Trajectory Folder**: {{ traces_folder }}
+
+**Parameters** ({{ variables | length }} total):
+{% for v in variables %}
+<parameter name="{{ v.name }}">
+{{ params[v.name] }}
+</parameter>
+
+- **What it is**: {{ v.about or "text the agent reads" }}
+{% if v.max_chars %}- **How to change it**: write a complete replacement of at most {{ v.max_chars }} characters (it is {{ params[v.name] | length }} now). Preserve correct existing facts and, where the traces support it, cover: **use when** (the trigger, prerequisites, how it differs from similar items), **inputs** (meanings, formats, constraints) and **returns** (important fields, empty or partial results, side effects, recoverable errors). Keep it local to this item: no multi-step task workflow, no unsupported guarantees.
+{% else %}- **How to change it**: keep the ENTIRE current value unchanged (do not truncate, reorganize or remove anything) and append what you learn at the end, under a final `## Learned Behaviors` section. Size the new content to the current length ({{ params[v.name] | length }} characters): under 5,000 characters, 3,000 - 5,000 characters of new content; 5,000 - 15,000, 2,000 - 4,000; over 15,000, 1,000 - 2,000.
+{% endif %}
+{% endfor %}
+
+---
+
+## Analysis Steps
+
+**Step 1: Check file sizes**
+```bash
+ls -lh {{ traces_folder }}/*.json | head -20
+```
+
+**Step 2: Categorize traces by outcome**
+```bash
+for f in {{ traces_folder }}/*.json; do
+    echo -n "$f: "
+    grep -oE '"reward":\s*[0-9.-]+' "$f" | head -1
+done 2>/dev/null | head -30
+```
+
+**Step 3: Examine sufficient traces**
+
+| Folder Size | Minimum Coverage |
+|-------------|------------------|
+| ≤ 10 traces | Examine ALL |
+| 11-30 traces | At least 70% |
+| > 30 traces | At least 50% |
+
+Balance coverage between successful and failed traces.
+
+**Step 4: Extract insights from differences**
+
+Focus on:
+- What do successful agents do that failed ones don't?
+- What mistakes do failed agents make?
+- What patterns appear across MULTIPLE traces (not one-off issues)?
+
+Put each insight in the ONE parameter that reaches the agent when it matters: guidance about one item's selection, inputs or results belongs in that item's text; guidance about the whole task belongs in the text that governs the whole task.
+
+**Step 5: Write and submit the parameters you change**
+
+Change only parameters the traces give you a reason to change, and at least one. Write each changed parameter's complete new value to its own file:
+```bash
+cat > /tmp/optimized_<name>.txt << 'PARAM_EOF'
+[the complete new value]
+PARAM_EOF
+```
+
+Before submitting, check the length of every file whose parameter has a character limit, and shorten it until it fits:
+```bash
+wc -c < /tmp/optimized_<name>.txt
+```
+A value over its limit is discarded and the current value kept.
+
+Then submit them under their exact names:
+```
+submit_optimized_params(file_path_dict={"<name>": "/tmp/optimized_<name>.txt", ...})
+```
+
+A parameter you do not submit keeps its current value.
+
+---
+
+## Criteria for Good Insights
+
+### Actionability
+Each insight should have:
+- Clear **trigger condition** (WHEN...)
+- Specific **action** (DO...)
+
+Reject vague insights like "be careful" or "consider edge cases".
+
+### Coverage
+- Address different failure modes observed
+- Prioritize patterns that appear in multiple traces
+
+### Appropriate Generalization
+- Keep actions concrete and specific
+- Generalize conditions when pattern applies broadly
