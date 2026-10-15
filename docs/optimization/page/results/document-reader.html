@@ -1,0 +1,14 @@
+<p>The baseline, a sliding window of 6 messages with a one-line prompt, scored 0.27: by the last page it had forgotten the ticket and most digits. The first round's structure proposal switched to the summarizing manager, still with the default prompt and settings, and that alone lifted the answer to 0.76. Its inner search then rewrote the prompt and both tool descriptions and tuned the summarizer, and candidate 4 reached 0.985 at 28,206 tokens: the study's best, and its only feasible candidate apart from one other.</p>
+<table>
+  <thead><tr><th>candidate</th><th>manager</th><th>answer</th><th>tokens</th><th>limits (answer ≥ 0.8, tokens ≤ 30,000)</th></tr></thead>
+  <tbody>
+    <tr><td>0, baseline</td><td>sliding window, 6 messages</td><td>0.27</td><td>17,938</td><td>answer too low</td></tr>
+    <tr><td>1</td><td>summarizing, defaults</td><td>0.76</td><td>24,609</td><td>answer too low</td></tr>
+    <tr><td>4, best</td><td>summarizing, ratio 0.77, keep 4</td><td>0.985</td><td>28,206</td><td>met</td></tr>
+    <tr><td>6</td><td>summarizing, ratio 0.68, keep 2</td><td>1.0</td><td>30,262</td><td>262 tokens over</td></tr>
+  </tbody>
+</table>
+<p>The token budget did real work. As the rewrites piled up, the system prompt grew from 53 to 2,453 characters in candidate 4 and past 6,000 later, and each extra character is resent on every turn. Seven of the eleven candidates broke the 30,000-token limit, among them candidate 6, which answered every case correctly.</p>
+<p>Rounds two and three each proposed the summarizing manager again with candidate 4's values. Those are values already measured, so each round opened on candidate 4 without measuring it again (the record's <code>repeat</code> events) and spent its iterations searching around it. The sliding window was never proposed again: TPE kept proposing the manager that had scored best.</p>
+<p>BayesBench, fitted after the run, puts the summarizing manager's effect on the answer at +0.49 (90% interval +0.31 to +0.67) over the sliding window, and finds no effect of the prompt rewrites or the summarizer's settings that it can tell from zero. The model fits the held-out cases (no flag). The search cost about 6.1 million reflection tokens, three times the 2.0 million the agent used in all 66 trials.</p>
+<p>In the panel the blocks are labeled by kind, as the record names them: structure is <code>choose_manager</code>, numbers is <code>tune_manager</code>, text is <code>rewrite_texts</code>. The Progress tab shows the three rounds and both limits; the Overview tab shows the effects; candidate 4 shows its rewritten prompt and tool descriptions as diffs, and any trial shows the agent paging through the document while its summarizer trims the conversation.</p>

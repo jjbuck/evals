@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="svg-bayesbench" viewBox="0 0 1000 492" width="100%" role="img" aria-labelledby="svg-bayesbench-title svg-bayesbench-desc">
+<title id="svg-bayesbench-title">Where BayesBench fits</title>
+<desc id="svg-bayesbench-desc">Two Bayesian pieces, in different places. Inside the loop, TPE (Optuna's tree-structured Parzen estimator) is a block's method: from the candidates measured so far it models where good and poor values of its block's numbers and choices lie, here window_size, and proposes the next values; each result is told back to it. It answers what to try next. Outside the loop, after a run, BayesBench reads the record (study.jsonl) and fits a conjugate Gaussian posterior over the main effects and pairwise interactions of every option and setting, and the case, on each goal, from every candidate's per-case means, each with its own noise; it writes effects.json. The explorer shows each option's change from its reference with a 90% credible interval, for example on the answer metric of a document-reader study: summarizing vs sliding_window +0.74, summary_ratio 0.428 to 0.768 +0.11, two system-prompt rewrites +0.04 and preserve_recent 4 to 7 -0.02, the last two with intervals that include zero; it flags the fit when the model misses held-out observations. It answers which choice helps, by how much, and how surely. A dashed path marks later work, not built yet: the same posterior inside the loop as a method for categorical blocks, choosing by Thompson sampling.</desc>
+<style>
+#svg-bayesbench text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0b0b0b; }
+#svg-bayesbench .svg-bayesbench-h { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; font-weight: 650; letter-spacing: -0.005em; }
+#svg-bayesbench .svg-bayesbench-sub { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: #52514e; }
+#svg-bayesbench .svg-bayesbench-b { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: #52514e; }
+#svg-bayesbench .svg-bayesbench-bi { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: #0b0b0b; }
+#svg-bayesbench .svg-bayesbench-sm { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; fill: #52514e; }
+#svg-bayesbench .svg-bayesbench-tick { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; fill: #898781; font-variant-numeric: tabular-nums; }
+#svg-bayesbench .svg-bayesbench-num { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 600; fill: #52514e; font-variant-numeric: tabular-nums; }
+#svg-bayesbench .svg-bayesbench-step { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; font-weight: 650; fill: #898781; font-variant-numeric: tabular-nums; }
+#svg-bayesbench .svg-bayesbench-q { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14.5px; font-weight: 600; fill: #0b0b0b; }
+#svg-bayesbench .svg-bayesbench-m { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; fill: #0b0b0b; }
+#svg-bayesbench .svg-bayesbench-m2 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; fill: #52514e; }
+#svg-bayesbench .svg-bayesbench-ms { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; fill: #52514e; }
+#svg-bayesbench .svg-bayesbench-mxs { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #52514e; }
+#svg-bayesbench .svg-bayesbench-mh { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; fill: #52514e; }
+#svg-bayesbench .svg-bayesbench-mb { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 600; fill: #0b0b0b; }
+#svg-bayesbench .svg-bayesbench-hair { stroke: #e8e7e1; stroke-width: 1; fill: none; }
+#svg-bayesbench .svg-bayesbench-axis { stroke: #c3c2b7; stroke-width: 1; fill: none; }
+#svg-bayesbench .svg-bayesbench-panel { fill: #ffffff; stroke: #e2e1dc; stroke-width: 1; }
+#svg-bayesbench .svg-bayesbench-flow { stroke: #2b2a27; stroke-width: 1.5; fill: none; }
+#svg-bayesbench .svg-bayesbench-link { stroke: #52514e; stroke-width: 1; fill: none; }
+#svg-bayesbench .svg-bayesbench-later { stroke: #898781; stroke-width: 1.3; fill: none; stroke-dasharray: 5 4; }
+</style>
+<defs><marker id="svg-bayesbench-a" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 z" fill="#2b2a27"/></marker><marker id="svg-bayesbench-a2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 z" fill="#52514e"/></marker><marker id="svg-bayesbench-a3" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 z" fill="#898781"/></marker></defs>
+<text x="24" y="28" class="svg-bayesbench-h">Inside the loop: TPE</text>
+<text x="24" y="48" class="svg-bayesbench-sub">Optuna's tree-structured Parzen estimator, a block's method</text>
+<rect x="24" y="70" width="300" height="250" rx="10" class="svg-bayesbench-panel"/>
+<rect x="40" y="87" width="10" height="10" rx="2" fill="#1baf7a"/>
+<text x="57" y="96" class="svg-bayesbench-m">Block(TPE(), window_size, …)</text>
+<path d="M44.0,232.5 L46.2,231.2 L48.3,230.1 L50.5,229.0 L52.7,228.1 L54.8,227.4 L57.0,226.9 L59.2,226.7 L61.3,226.6 L63.5,226.8 L65.7,227.1 L67.8,227.6 L70.0,228.3 L72.2,229.0 L74.3,229.8 L76.5,230.6 L78.7,231.4 L80.8,232.1 L83.0,232.7 L85.2,233.3 L87.3,233.7 L89.5,233.9 L91.7,234.1 L93.8,234.1 L96.0,234.0 L98.2,233.7 L100.3,233.3 L102.5,232.9 L104.7,232.3 L106.8,231.7 L109.0,231.0 L111.2,230.2 L113.3,229.4 L115.5,228.5 L117.7,227.6 L119.8,226.6 L122.0,225.6 L124.2,224.6 L126.3,223.5 L128.5,222.4 L130.7,221.3 L132.8,220.2 L135.0,219.0 L137.2,217.8 L139.3,216.7 L141.5,215.5 L143.7,214.2 L145.8,213.0 L148.0,211.8 L150.2,210.6 L152.3,209.4 L154.5,208.2 L156.7,207.0 L158.8,205.8 L161.0,204.6 L163.2,203.4 L165.3,202.3 L167.5,201.2 L169.7,200.1 L171.8,199.0 L174.0,198.0 L176.2,197.0 L178.3,196.1 L180.5,195.2 L182.7,194.4 L184.8,193.6 L187.0,192.9 L189.2,192.2 L191.3,191.6 L193.5,191.0 L195.7,190.5 L197.8,190.1 L200.0,189.7 L202.2,189.4 L204.3,189.2 L206.5,189.1 L208.7,189.0 L210.8,189.0 L213.0,189.0 L215.2,189.2 L217.3,189.4 L219.5,189.6 L221.7,190.0 L223.8,190.4 L226.0,190.8 L228.2,191.4 L230.3,192.0 L232.5,192.6 L234.7,193.3 L236.8,194.1 L239.0,194.9 L241.2,195.8 L243.3,196.7 L245.5,197.7 L247.7,198.7 L249.8,199.7 L252.0,200.8 L254.2,201.9 L256.3,203.0 L258.5,204.2 L260.7,205.4 L262.8,206.6 L265.0,207.8 L267.2,209.0 L269.3,210.2 L271.5,211.4 L273.7,212.6 L275.8,213.8 L278.0,215.1 L280.2,216.3 L282.3,217.4 L284.5,218.6 L286.7,219.8 L288.8,220.9 L291.0,222.1 L293.2,223.2 L295.3,224.2 L297.5,225.3 L299.7,226.3 L301.8,227.3 L304.0,228.3" class="" fill="none" stroke="#c3c2b7" stroke-width="2"/>
+<path d="M44.0,237.6 L46.2,235.7 L48.3,233.5 L50.5,231.0 L52.7,228.2 L54.8,225.0 L57.0,221.4 L59.2,217.5 L61.3,213.3 L63.5,208.7 L65.7,203.9 L67.8,198.9 L70.0,193.7 L72.2,188.5 L74.3,183.3 L76.5,178.2 L78.7,173.4 L80.8,168.9 L83.0,164.8 L85.2,161.3 L87.3,158.4 L89.5,156.2 L91.7,154.7 L93.8,154.0 L96.0,154.2 L98.2,155.1 L100.3,156.8 L102.5,159.3 L104.7,162.4 L106.8,166.1 L109.0,170.3 L111.2,174.9 L113.3,179.9 L115.5,185.0 L117.7,190.2 L119.8,195.4 L122.0,200.5 L124.2,205.5 L126.3,210.3 L128.5,214.7 L130.7,218.9 L132.8,222.7 L135.0,226.1 L137.2,229.2 L139.3,231.9 L141.5,234.3 L143.7,236.4 L145.8,238.2 L148.0,239.7 L150.2,240.9 L152.3,242.0 L154.5,242.8 L156.7,243.5 L158.8,244.1 L161.0,244.5 L163.2,244.9 L165.3,245.2 L167.5,245.4 L169.7,245.5 L171.8,245.7 L174.0,245.8 L176.2,245.8 L178.3,245.9 L180.5,245.9 L182.7,245.9 L184.8,246.0 L187.0,246.0 L189.2,246.0 L191.3,246.0 L193.5,246.0 L195.7,246.0 L197.8,246.0 L200.0,246.0 L202.2,246.0 L204.3,246.0 L206.5,246.0 L208.7,246.0 L210.8,246.0 L213.0,246.0 L215.2,246.0 L217.3,246.0 L219.5,246.0 L221.7,246.0 L223.8,246.0 L226.0,246.0 L228.2,246.0 L230.3,246.0 L232.5,246.0 L234.7,246.0 L236.8,246.0 L239.0,246.0 L241.2,246.0 L243.3,246.0 L245.5,246.0 L247.7,246.0 L249.8,246.0 L252.0,246.0 L254.2,246.0 L256.3,246.0 L258.5,246.0 L260.7,246.0 L262.8,246.0 L265.0,246.0 L267.2,246.0 L269.3,246.0 L271.5,246.0 L273.7,246.0 L275.8,246.0 L278.0,246.0 L280.2,246.0 L282.3,246.0 L284.5,246.0 L286.7,246.0 L288.8,246.0 L291.0,246.0 L293.2,246.0 L295.3,246.0 L297.5,246.0 L299.7,246.0 L301.8,246.0 L304.0,246.0" class="" fill="none" stroke="#2b2a27" stroke-width="2"/>
+<text x="112.556" y="162" class="svg-bayesbench-sm">good so far</text>
+<text x="231.778" y="180" class="svg-bayesbench-sm">the rest</text>
+<line x1="94.5556" y1="150" x2="94.5556" y2="246" stroke="#52514e" stroke-width="1" stroke-dasharray="2 2.5"/>
+<text x="94.5556" y="144" class="svg-bayesbench-sm" text-anchor="middle">next</text>
+<line x1="44" y1="246" x2="304" y2="246" class="svg-bayesbench-axis"/>
+<circle cx="72.8889" cy="258" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="87.3333" cy="258" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="109" cy="258" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="123.444" cy="258" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="51.2222" cy="258" r="4" fill="#c3c2b7" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="152.333" cy="258" r="4" fill="#c3c2b7" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="188.444" cy="258" r="4" fill="#c3c2b7" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="224.556" cy="258" r="4" fill="#c3c2b7" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="253.444" cy="258" r="4" fill="#c3c2b7" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="289.556" cy="258" r="4" fill="#c3c2b7" stroke="#ffffff" stroke-width="1.5"/>
+<text x="44" y="286" class="svg-bayesbench-tick" text-anchor="middle">4</text>
+<text x="174" y="286" class="svg-bayesbench-tick" text-anchor="middle">22</text>
+<text x="304" y="286" class="svg-bayesbench-tick" text-anchor="middle">40</text>
+<text x="174" y="306" class="svg-bayesbench-ms" text-anchor="middle">window_size</text>
+<text x="24" y="350" class="svg-bayesbench-b">From the candidates measured so far, TPE models</text>
+<text x="24" y="368" class="svg-bayesbench-b">where good and poor values of its block's numbers</text>
+<text x="24" y="386" class="svg-bayesbench-b">and choices lie, and proposes values likely under</text>
+<text x="24" y="404" class="svg-bayesbench-b">the good model and unlikely under the poor one.</text>
+<text x="24" y="422" class="svg-bayesbench-b">Each result is told back to it.</text>
+<text x="24" y="470" class="svg-bayesbench-q">What should we try next?</text>
+<path d="M413.7,164.0A58,58 0 0 1 456.0,121.7" class="svg-bayesbench-flow" marker-end="url(#svg-bayesbench-a)"/>
+<path d="M484.0,121.7A58,58 0 0 1 526.3,164.0" class="svg-bayesbench-flow" marker-end="url(#svg-bayesbench-a)"/>
+<path d="M526.3,192.0A58,58 0 0 1 484.0,234.3" class="svg-bayesbench-flow" marker-end="url(#svg-bayesbench-a)"/>
+<path d="M456.0,234.3A58,58 0 0 1 413.7,192.0" class="svg-bayesbench-flow" marker-end="url(#svg-bayesbench-a)"/>
+<circle cx="412.0" cy="178.0" r="4.5" fill="#2b2a27" stroke="#f9f9f7" stroke-width="2"/>
+<circle cx="470.0" cy="120.0" r="4.5" fill="#2b2a27" stroke="#f9f9f7" stroke-width="2"/>
+<circle cx="528.0" cy="178.0" r="4.5" fill="#2b2a27" stroke="#f9f9f7" stroke-width="2"/>
+<circle cx="470.0" cy="236.0" r="4.5" fill="#2b2a27" stroke="#f9f9f7" stroke-width="2"/>
+<text x="424" y="182.5" class="svg-bayesbench-sm">search</text>
+<text x="470" y="142" class="svg-bayesbench-sm" text-anchor="middle">measure</text>
+<text x="516" y="182.5" class="svg-bayesbench-sm" text-anchor="end">project</text>
+<text x="470" y="222" class="svg-bayesbench-sm" text-anchor="middle">feedback</text>
+<text x="470" y="106" class="svg-bayesbench-sub" text-anchor="middle">the loop</text>
+<line x1="324" y1="178" x2="406" y2="178" class="svg-bayesbench-link"/>
+<path d="M534.0,178.0H638" class="svg-bayesbench-link" marker-end="url(#svg-bayesbench-a2)"/>
+<text x="586" y="169" class="svg-bayesbench-ms" text-anchor="middle">study.jsonl</text>
+<text x="586" y="198" class="svg-bayesbench-sm" text-anchor="middle">after a run</text>
+<text x="640" y="28" class="svg-bayesbench-h">After a run: BayesBench</text>
+<text x="640" y="48" class="svg-bayesbench-sub">the effects model, fitted to the record</text>
+<rect x="640" y="70" width="336" height="250" rx="10" class="svg-bayesbench-panel"/>
+<text x="656" y="96" class="svg-bayesbench-bi">answer<tspan class="svg-bayesbench-sm">: change from the reference</tspan></text>
+<rect x="914" y="83" width="46" height="18" rx="4" fill="#f3f2ee"/>
+<text x="937" y="96" class="svg-bayesbench-sm" text-anchor="middle" style="font-weight:600">fit ok</text>
+<line x1="801.478" y1="128" x2="801.478" y2="288" stroke="#0b0b0b" stroke-opacity="0.5"/>
+<text x="801.478" y="122" class="svg-bayesbench-tick" text-anchor="middle">0</text>
+<line x1="855.043" y1="128" x2="855.043" y2="288" class="svg-bayesbench-hair"/>
+<text x="855.043" y="122" class="svg-bayesbench-tick" text-anchor="middle">0.4</text>
+<line x1="908.609" y1="128" x2="908.609" y2="288" class="svg-bayesbench-hair"/>
+<text x="908.609" y="122" class="svg-bayesbench-tick" text-anchor="middle">0.8</text>
+<text x="656" y="145.5" class="svg-bayesbench-m" dy="0.34em" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">manager<tspan class="svg-bayesbench-sm"> vs sliding_window</tspan></text>
+<g>
+<text x="672" y="164.5" class="svg-bayesbench-sm" dy="0.34em">summarizing</text>
+<line x1="882.63" y1="164.5" x2="917.581" y2="164.5" stroke="#2b2a27" stroke-width="2" stroke-linecap="round"/>
+<circle cx="900.038" cy="164.5" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<text x="960" y="164.5" class="svg-bayesbench-tick" text-anchor="end" dy="0.34em">+0.74</text>
+</g>
+<text x="656" y="183.5" class="svg-bayesbench-m" dy="0.34em" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">summary_ratio<tspan class="svg-bayesbench-sm"> vs 0.146–0.313</tspan></text>
+<g>
+<text x="672" y="202.5" class="svg-bayesbench-sm" dy="0.34em">0.428–0.768</text>
+<line x1="802.683" y1="202.5" x2="829.734" y2="202.5" stroke="#2b2a27" stroke-width="2" stroke-linecap="round"/>
+<circle cx="816.209" cy="202.5" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<text x="960" y="202.5" class="svg-bayesbench-tick" text-anchor="end" dy="0.34em">+0.11</text>
+</g>
+<text x="656" y="221.5" class="svg-bayesbench-m" dy="0.34em" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">system_prompt<tspan class="svg-bayesbench-sm"> vs default</tspan></text>
+<g opacity="0.45">
+<text x="672" y="240.5" class="svg-bayesbench-sm" dy="0.34em">2 rewrites</text>
+<line x1="778.713" y1="240.5" x2="835.358" y2="240.5" stroke="#2b2a27" stroke-width="2" stroke-linecap="round"/>
+<circle cx="807.103" cy="240.5" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<text x="960" y="240.5" class="svg-bayesbench-tick" text-anchor="end" dy="0.34em">+0.04</text>
+</g>
+<text x="656" y="259.5" class="svg-bayesbench-m" dy="0.34em" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">preserve_recent<tspan class="svg-bayesbench-sm"> vs 7–11</tspan></text>
+<g opacity="0.45">
+<text x="672" y="278.5" class="svg-bayesbench-sm" dy="0.34em">4–7</text>
+<line x1="785.543" y1="278.5" x2="810.986" y2="278.5" stroke="#2b2a27" stroke-width="2" stroke-linecap="round"/>
+<circle cx="798.264" cy="278.5" r="4" fill="#2b2a27" stroke="#ffffff" stroke-width="1.5"/>
+<text x="960" y="278.5" class="svg-bayesbench-tick" text-anchor="end" dy="0.34em">−0.02</text>
+</g>
+<text x="656" y="308" class="svg-bayesbench-sm">90% credible intervals; faint: the interval includes 0</text>
+<text x="640" y="350" class="svg-bayesbench-b">Fits a conjugate Gaussian posterior over the main</text>
+<text x="640" y="368" class="svg-bayesbench-b">effects and pairwise interactions of every option and</text>
+<text x="640" y="386" class="svg-bayesbench-b">setting (and the case) on each goal, from every</text>
+<text x="640" y="404" class="svg-bayesbench-b">candidate's per-case means, each with its own noise,</text>
+<text x="640" y="422" class="svg-bayesbench-b">and writes <tspan class="svg-bayesbench-m">effects.json</tspan>. The explorer flags the fit</text>
+<text x="640" y="440" class="svg-bayesbench-b">when it misses held-out observations.</text>
+<text x="640" y="470" class="svg-bayesbench-q">Which choice helps, by how much, how sure?</text>
+<path d="M636,290C566,410 386.0,328.0 408.0,192.0" class="svg-bayesbench-later" marker-end="url(#svg-bayesbench-a3)"/>
+<text x="476" y="384" class="svg-bayesbench-sm" text-anchor="middle">Later, not built yet: the same</text>
+<text x="476" y="401" class="svg-bayesbench-sm" text-anchor="middle">posterior inside the loop, as a</text>
+<text x="476" y="418" class="svg-bayesbench-sm" text-anchor="middle">method for categorical blocks</text>
+<text x="476" y="435" class="svg-bayesbench-sm" text-anchor="middle">that chooses by Thompson sampling</text>
+</svg>

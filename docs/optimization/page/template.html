@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Optimizing a Strands agent's harness · strands_evals.optimization</title>
+<meta name="description" content="strands_evals.optimization: declare a Strands agent's tunable prompts, tool descriptions, settings and components; a study measures every candidate with repetitions and 95% intervals and searches them in blocks. Three studies: a poem length steel thread, a document reader, and τ²-bench airline.">
+<meta name="author" content="jonabuck">
+<base target="_blank">
+<style>
+/* Tokens. The page, ink, rules and link colour are the explorer's own, so the live panels sit in the page. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #ffffff;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e8e7e1;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.09);
+  --link: #1f5fae;
+  --code-bg: #f3f2ee;
+  --code-ink: #22211f;
+  --c-comment: #6e6c66;
+  --c-string: #2b6a2b;
+  --c-literal: #8a4b08;
+  --warn-bg: #fdf3dc;
+  --warn-ink: #7a5300;
+
+  /* Prose is set in a serif; the apparatus (headings, captions, panels, labels) in the explorer's sans. */
+  --serif: Charter, "Bitstream Charter", "Sitka Text", "Iowan Old Style", Cambria, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* 4pt spacing scale */
+  --s1: 0.25rem; --s2: 0.5rem; --s3: 0.75rem; --s4: 1rem; --s5: 1.5rem;
+  --s6: 2rem; --s7: 3rem; --s8: 4rem; --s9: 6rem;
+
+  /* Three measures: prose, code and figures, live panels. */
+  --measure: 41rem;
+  --mid: 66rem;
+  --wide: 86rem;
+  --gutter: clamp(1rem, 4vw, 3rem);
+  --radius: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--page);
+  color: var(--ink);
+  font: 400 clamp(1.0625rem, 1rem + 0.2vw, 1.125rem)/1.62 var(--serif);
+  overflow-wrap: break-word;
+}
+main { flex: 1 0 auto; }
+.masthead, main, .colophon { padding-inline: var(--gutter); }
+
+/* Flow: every block sits on the prose measure unless it asks for more room. */
+.masthead > *, section > *, .prose > *, .colophon > * { max-width: var(--measure); margin-inline: auto; }
+section > section { max-width: none; }
+section > .code, section > .fig { max-width: var(--mid); }
+section > .wide { max-width: var(--wide); }
+
+p, ul, ol { margin-top: 0; margin-bottom: var(--s4); }
+p { text-wrap: pretty; }
+a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
+a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 2px; }
+strong { font-weight: 700; }
+
+h1, h2, h3 { font-family: var(--sans); color: var(--ink); text-wrap: balance; }
+h2 {
+  font-size: clamp(1.5rem, 1.25rem + 0.9vw, 2rem);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin-top: 0;
+  margin-bottom: var(--s5);
+}
+h3 {
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.3;
+  margin: var(--s7) auto var(--s3);
+}
+
+/* Section seams: one hairline at the panels' width, and air. */
+section.major { margin-top: var(--s8); }
+section.major::before {
+  content: "";
+  display: block;
+  max-width: var(--wide);
+  margin: 0 auto var(--s7);
+  border-top: 1px solid var(--grid);
+}
+
+/* Inline code; names from strands_evals.optimization are blue here and in the listings. */
+:not(pre) > code {
+  font-family: var(--mono);
+  font-size: 0.84em;
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 0.06em 0.2em;
+  overflow-wrap: anywhere;
+}
+code.api { color: var(--link); }
+
+/* ---- masthead ---- */
+.masthead { padding-top: clamp(2.5rem, 7vw, 6rem); }
+.kicker {
+  font: 500 0.875rem/1.4 var(--mono);
+  color: var(--ink-2);
+  margin-bottom: var(--s4);
+}
+h1 {
+  font-size: clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  margin: 0 auto var(--s5);
+}
+.standfirst {
+  font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.4rem);
+  line-height: 1.42;
+  color: var(--ink-2);
+  margin-bottom: var(--s5);
+}
+.byline {
+  font: 0.875rem/1.4 var(--sans);
+  color: var(--ink-2);
+  margin-bottom: var(--s7);
+}
+.byline .sep { color: var(--muted); margin-inline: 0.4em; }
+
+/* ---- contents ---- */
+.toc {
+  font: 0.9375rem/1.45 var(--sans);
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--grid);
+  padding: var(--s3) 0 var(--s3);
+}
+.label {
+  font: 650 0.75rem/1.4 var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 0 0 var(--s2);
+}
+.toc ol { list-style: none; margin: 0; padding: 0; columns: 2 15rem; column-gap: var(--s6); counter-reset: toc; }
+.toc li { counter-increment: toc; display: flex; gap: var(--s3); padding: var(--s1) 0; break-inside: avoid; }
+.toc li::before { content: counter(toc); color: var(--muted); min-width: 1.1em; font-variant-numeric: tabular-nums; }
+.toc a { color: var(--ink); text-decoration: none; }
+.toc a:hover { color: var(--link); text-decoration: underline; }
+
+/* ---- glossary ---- */
+.terms {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 10.5rem) minmax(0, 1fr);
+  column-gap: var(--s5);
+  margin-top: var(--s4);
+  margin-bottom: var(--s6);
+}
+.terms dt, .terms dd { margin: 0; border-top: 1px solid var(--grid); padding: var(--s3) 0; }
+.terms dt { font: 650 0.9375rem/1.5 var(--sans); padding-top: calc(var(--s3) + 0.2em); }
+.terms > :nth-last-child(-n + 2) { border-bottom: 1px solid var(--grid); }
+/* Wide screens: the terms hang in the left margin, so the definitions keep the prose measure. */
+@media (min-width: 72rem) {
+  section > .terms {
+    max-width: calc(var(--measure) + 12rem);
+    grid-template-columns: 10.5rem minmax(0, 1fr);
+    position: relative;
+    left: -6rem;
+  }
+  .terms dt { text-align: right; }
+}
+@media (max-width: 40rem) {
+  .terms { grid-template-columns: minmax(0, 1fr); }
+  .terms dd { border-top: 0; padding-top: 0; }
+  .terms > dt:nth-last-child(2) { border-bottom: 0; }
+}
+
+/* ---- code listings ---- */
+.code {
+  margin-top: var(--s5);
+  margin-bottom: var(--s6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  overflow: hidden;
+}
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s4);
+  padding: var(--s2) var(--s4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font: 0.8125rem/1.4 var(--sans);
+  color: var(--ink-2);
+}
+.bar .path { font: 0.78rem/1.4 var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+.code pre {
+  margin: 0;
+  padding: var(--s4) var(--s5);
+  overflow-x: auto;
+  font: 0.8125rem/1.6 var(--mono);
+  color: var(--code-ink);
+  tab-size: 4;
+}
+.code pre code { font: inherit; }
+.k { font-weight: 650; color: var(--ink); }
+.fn { font-weight: 650; color: var(--ink); }
+.s { color: var(--c-string); }
+.c { color: var(--c-comment); }
+.n, .d { color: var(--c-literal); }
+.api { color: var(--link); }
+.d.api { color: var(--link); }
+
+.cmd {
+  margin-top: 0;
+  margin-bottom: var(--s5);
+  padding: var(--s2) var(--s4);
+  background: var(--code-bg);
+  border-radius: 6px;
+  overflow-x: auto;
+  font: 0.8125rem/1.6 var(--mono);
+  color: var(--code-ink);
+}
+.cmd code { font: inherit; }
+
+/* ---- figures (drawn separately; each replaces its placeholder) ---- */
+.fig { margin-top: var(--s6); margin-bottom: var(--s7); }
+.fig-art > svg, .fig-art > img { display: block; width: 100%; height: auto; }
+.fig-art:empty {
+  min-height: 12rem;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--axis);
+  border-radius: var(--radius);
+}
+.fig-art:empty::before { content: "Figure in preparation"; font: 0.8125rem var(--sans); color: var(--muted); }
+.fig figcaption {
+  max-width: var(--measure);
+  margin: var(--s3) auto 0;
+  font: 0.875rem/1.5 var(--sans);
+  color: var(--ink-2);
+}
+.fig-n { color: var(--ink); font-weight: 650; margin-right: 0.35em; }
+
+/* ---- live panels: the explorer, embedded ---- */
+.live {
+  margin-top: var(--s5);
+  margin-bottom: var(--s7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.live .bar { justify-content: flex-start; gap: var(--s1) var(--s2); }
+.live .bar b { color: var(--ink); font-weight: 650; }
+.live .bar .sep { color: var(--muted); }
+.live .bar .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--link);
+  align-self: center;
+  flex: none;
+}
+.viewer { height: min(85dvh, 980px); overflow: auto; background: var(--page); }
+.viewer > iframe { display: block; width: 100%; height: 100%; border: 0; }
+.viewer:empty:not([data-mounted]) { display: grid; place-items: center; }
+.viewer:empty:not([data-mounted])::before { content: "The explorer opens this study's record here."; font: 0.875rem var(--sans); color: var(--muted); }
+
+/* ---- results commentary (written later) ---- */
+.results table { width: 100%; border-collapse: collapse; font: 0.875rem/1.45 var(--sans); margin-bottom: var(--s5); }
+.results th { text-align: left; font-weight: 600; font-size: 0.8125rem; color: var(--ink-2); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--axis); }
+.results td { padding: var(--s2) var(--s3); border-bottom: 1px solid var(--grid); vertical-align: top; }
+.results .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---- colophon ---- */
+.colophon {
+  margin-top: var(--s9);
+  padding-top: var(--s6);
+  padding-bottom: var(--s8);
+  border-top: 1px solid var(--grid);
+  font: 0.875rem/1.55 var(--sans);
+  color: var(--ink-2);
+}
+.colophon h2 { font: 650 0.75rem/1.4 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); margin-bottom: var(--s3); }
+.colophon dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--s2) var(--s5); margin: 0 auto var(--s4); }
+.colophon dt { color: var(--ink); font-weight: 600; }
+.colophon dd { margin: 0; }
+.todo {
+  display: inline-block;
+  font: 600 0.8125rem/1.45 var(--sans);
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  border-radius: 5px;
+  padding: var(--s1) var(--s2);
+}
+@media (max-width: 30rem) {
+  .colophon dl { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .colophon dd { margin-bottom: var(--s2); }
+}
+
+@media (max-width: 40rem) {
+  .code pre { font-size: 0.75rem; padding: var(--s3) var(--s4); }
+  .bar { padding: var(--s2) var(--s3); }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <p class="kicker">strands_evals.optimization</p>
+  <h1 id="top">Optimizing a Strands agent's harness</h1>
+  <p class="standfirst">A new Strands Evals module that searches an agent's prompts, tool descriptions, settings and components together, and measures every candidate with repetitions and 95% intervals.</p>
+  <p class="byline">jonabuck<span class="sep" aria-hidden="true">·</span><time datetime="2026-10-15">2026-10-15</time></p>
+  <nav class="toc" aria-label="Contents">
+    <p class="label">Contents</p>
+    <ol>
+      <li><a href="#problem" target="_self">The problem</a></li>
+      <li><a href="#approach" target="_self">How a study works</a></li>
+      <li><a href="#hello-world" target="_self">Hello world: poems of 40 to 60 words</a></li>
+      <li><a href="#document-reader" target="_self">The document reader</a></li>
+      <li><a href="#tau2-airline" target="_self">τ²-bench airline</a></li>
+      <li><a href="#next" target="_self">What's next</a></li>
+      <li><a href="#colophon" target="_self">Colophon</a></li>
+    </ol>
+  </nav>
+</header>
+
+<main>
+<article>
+
+<section class="major" aria-labelledby="problem">
+  <h2 id="problem">The problem</h2>
+  <p>Fix the model, and an agent's quality and cost still depend on its harness. That covers the system prompt and each tool's description, which conversation manager trims the history and with what settings, whether the model thinks before it acts and on how many tokens, and structural choices such as whether a write to a customer's records is held back and checked again before it runs.</p>
+  <p>Today we tune these by hand, one change at a time. Someone edits the prompt, runs a few cases once, and compares the averages. With no repetitions and no intervals, a real gain of a few points looks the same as run-to-run noise, and each change is judged against whatever the other settings happened to be that day.</p>
+  <p>The variables are also of different kinds. A prompt is free text, a window size is an integer, and a conversation manager is a choice between components that each bring settings of their own, settings that exist only when that component is chosen. Optimizers built for numbers and choices, such as Optuna's, cannot write text. Prompt optimizers rewrite text and leave everything else where it was.</p>
+  <p>Failures also hide in the averages. When the agent raises an exception, a model call is throttled, or a simulated user crashes, the run often scores 0 and goes into the mean with the real answers, so a broken environment reads as a bad prompt.</p>
+</section>
+
+<section class="major" aria-labelledby="approach">
+  <h2 id="approach">How a study works</h2>
+  <p>The module turns tuning into a measured search over declared variables. You write an ordinary Strands agent factory and declare its tunable arguments, as Python objects, in a <code class="api">@tunable</code> decorator. A <code class="api">Study</code> builds a fresh agent from the factory for every trial, runs it on a Strands Evals <code>Experiment</code>, and turns the evaluators' scores and the agent's usage into estimates with intervals.</p>
+  <p>A search proposes each next candidate. Each kind of variable gets a method suited to it, and a schedule decides which methods move in each iteration while the rest of the candidate stays at the best found so far.</p>
+
+  <figure class="fig" id="fig-loop">
+    <div class="fig-art"><!-- FIGURE:loop --></div>
+    <figcaption><span class="fig-n">Figure 1.</span>The optimization loop. The search proposes a candidate. The study builds the agent from the factory for each trial, runs every case with repetitions, estimates each metric over cases, checks the objectives and constraints, appends the candidate to the record, and tells the methods the result.</figcaption>
+  </figure>
+
+  <section aria-labelledby="measuring">
+    <h3 id="measuring">What a study measures</h3>
+    <dl class="terms">
+      <dt>Tunable variables</dt>
+      <dd>The factory's arguments, declared as objects. <code class="api">TextValue</code> is free text. <code class="api">Int</code>, <code class="api">Float</code> and <code class="api">Choice</code> are settings. <code class="api">OneOf(component(...), ...)</code> is a choice between components that each have their own settings. <code class="api">tool_descriptions(...)</code> makes each tool's description a text, and <code class="api">SkillLibrary</code> makes a library of Agent Skills a value. A search names these same objects.</dd>
+
+      <dt>Candidates and trials</dt>
+      <dd>A candidate is one set of values. It runs every case of the experiment <code>repetitions</code> times, and each run is a trial with a status. A trial whose agent raised is an <code>agent_failure</code>, scored by a declared policy (by default the worst end of the metric's range). A trial that measured nothing, because a call was throttled or a simulated user failed, is invalid. It runs again and never enters an average.</dd>
+
+      <dt>Estimates</dt>
+      <dd>Repetitions are averaged within each case and the case is the unit, so every metric is a mean over cases with a 95% interval.</dd>
+
+      <dt>Objectives</dt>
+      <dd><code class="api">Maximize</code> and <code class="api">Minimize</code> name a metric. It can be an evaluator's score, the agent's usage (<code>tokens</code>, <code>seconds</code>, <code>model_calls</code>, <code>removed_messages</code>), or a <code class="api">Derived</code> metric computed from those for each trial. Several objectives are wrapped in how they combine. <code class="api">Pareto</code> keeps the front; <code class="api">WeightedSum</code>, <code class="api">Chebyshev</code> and <code class="api">Lexicographic</code> rank candidates by one number or one order; <code class="api">Independent</code> gives each objective its own copy of every method.</dd>
+
+      <dt>Constraints</dt>
+      <dd><code class="api">AtLeast</code> and <code class="api">AtMost</code> put a limit on any metric, a <code class="api">Derived</code> one included. A candidate that breaks a limit is infeasible and is never the best.</dd>
+    </dl>
+  </section>
+
+  <section aria-labelledby="searching">
+    <h3 id="searching">How it searches</h3>
+    <dl class="terms">
+      <dt>Blocks</dt>
+      <dd>A block is a method and the variables it proposes. <code class="api">TPE</code>, Optuna's tree-structured Parzen estimator, proposes numbers and choices. <code class="api">Reflection</code> gives a stronger model (Claude Sonnet 4 by default) the held candidate's trials, those that scored well beside those that did not, and the model rewrites the texts the traces give it a reason to change. <code class="api">SkillCuration</code> creates, revises or retires the skills in a library. A variable that no block names goes to the default block for its kind.</dd>
+
+      <dt>Schedules</dt>
+      <dd>A schedule says which blocks move in each iteration; the others stay at the incumbent. <code class="api">Joint()</code> moves every block every time, and <code class="api">Alternate(...)</code> one block at a time. <code class="api">Nested(outer=..., inner=...)</code> runs rounds. The outer block proposes (a conversation manager, say), a short inner search runs under that choice, and the outer method is told the round's best. Schedules nest to any depth.</dd>
+
+      <dt>No repeats</dt>
+      <dd>Values already measured are never measured again. A step that repeats a measured candidate tells its methods that candidate's result and proposes again, up to <code>redraws</code> times. If it still repeats, the schedule moves on.</dd>
+    </dl>
+    <p>Together this is block-coordinate optimization. Each block proposes its own variables from the same held candidate, and every block's method learns from the same results.</p>
+
+    <figure class="fig" id="fig-blocks">
+      <div class="fig-art"><!-- FIGURE:blocks --></div>
+      <figcaption><span class="fig-n">Figure 2.</span>Blocks and schedules. A block pairs a method with the variables it proposes. Joint moves every block in each iteration, Alternate one block at a time, and Nested fixes the outer block's choice for a round while an inner search runs under it.</figcaption>
+    </figure>
+  </section>
+
+  <section aria-labelledby="record">
+    <h3 id="record">What it records</h3>
+    <p>With <code>record=</code>, the study appends each candidate to <code>study.jsonl</code> as it finishes. The entry holds the candidate's values, what each method proposed and was told, its trials and their transcripts, its estimates and constraint violations, and its place in the schedule. The explorer in <code>explorer/</code> reads that file and draws only what it records. The panels on this page are the explorer, opened on each study's record.</p>
+    <p>TPE proposes, but it keeps no posterior over outcomes and ignores measurement noise, so the candidates it picked say little about which options helped. After each run, <code>effects.py</code> fits BayesBench, a conjugate Gaussian model of main effects and two-way interactions, to the record. Its factors are the choices at any depth, each number binned into three ranges of the values tried, each text by how many rewrites deep it is, and the case, so that a hard case is not mistaken for a bad option. For each option and goal it reports the effect in the goal's own units with a 90% credible interval, along with diagnostics that say whether the model fits well enough to read. The explorer shows these on its Overview and Search space pages. BayesBench is installed separately; without it, a run writes no effects.</p>
+
+    <figure class="fig" id="fig-bayesbench">
+      <div class="fig-art"><!-- FIGURE:bayesbench --></div>
+      <figcaption><span class="fig-n">Figure 3.</span>Where BayesBench fits. TPE works inside the loop and proposes the next numbers and choices. BayesBench works outside it, on the finished record, and estimates each option's effect on each goal with a credible interval.</figcaption>
+    </figure>
+  </section>
+</section>
+
+<section class="major" aria-labelledby="hello-world">
+  <h2 id="hello-world">Hello world: poems of 40 to 60 words</h2>
+  <p>The smallest study tunes one text. The poet's system prompt starts as “You write poems about the topic you are given.” The evaluator passes a poem of 40 to 60 words. Six topics, each run twice, give 12 trials per candidate, and the objective is to maximize <code>WordCount</code>, the share of poems that pass. In the listings, names from <code>strands_evals.optimization</code> are set in blue. This study uses four of them.</p>
+
+  <figure class="code" id="code-poem">
+    <figcaption class="bar"><span class="path">examples/optimization/poem_length.py</span><span>docstring and closing prints left out</span></figcaption>
+    <pre><code><span class="k">import</span> time
+
+<span class="k">from</span> strands <span class="k">import</span> Agent
+
+<span class="k">from</span> strands_evals <span class="k">import</span> Case, Experiment
+<span class="k">from</span> strands_evals.evaluators <span class="k">import</span> Evaluator
+<span class="k">from</span> strands_evals.optimization <span class="k">import</span> <span class="api">Maximize</span>, <span class="api">Study</span>, <span class="api">TextValue</span>, <span class="api">tunable</span>
+<span class="k">from</span> strands_evals.types.evaluation <span class="k">import</span> EvaluationOutput
+
+
+<span class="d api">@tunable</span>(system_prompt=<span class="api">TextValue</span>(default=<span class="s">"You write poems about the topic you are given."</span>))
+<span class="k">def</span> <span class="fn">create_poet</span>(system_prompt):
+    <span class="k">return</span> Agent(system_prompt=system_prompt, callback_handler=<span class="k">None</span>)
+
+
+<span class="k">class</span> <span class="fn">WordCount</span>(Evaluator):
+    <span class="s">"""Passes when the poem has 40 to 60 words."""</span>
+
+    <span class="k">def</span> <span class="fn">evaluate</span>(self, case):
+        words = len(str(case.actual_output).split())
+        passed = <span class="n">40</span> &lt;= words &lt;= <span class="n">60</span>
+        <span class="k">return</span> [EvaluationOutput(score=float(passed), test_pass=passed, reason=<span class="s">f"{words} words (40 to 60 passes)"</span>)]
+
+    <span class="k">async</span> <span class="k">def</span> <span class="fn">evaluate_async</span>(self, case):
+        <span class="k">return</span> self.evaluate(case)
+
+
+topics = [<span class="s">"the sea"</span>, <span class="s">"a city at night"</span>, <span class="s">"first snow"</span>, <span class="s">"an old dog"</span>, <span class="s">"the last train home"</span>, <span class="s">"a garden in August"</span>]
+experiment = Experiment(cases=[Case(name=t, input=t) <span class="k">for</span> t <span class="k">in</span> topics], evaluators=[WordCount()])
+
+study = <span class="api">Study</span>(
+    agent=create_poet,
+    experiment=experiment,
+    objectives=<span class="api">Maximize</span>(<span class="s">"WordCount"</span>),
+    repetitions=<span class="n">2</span>,
+    record=<span class="s">f"studies/poem-length-{time.strftime('%Y%m%d-%H%M%S')}"</span>,
+)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    study.optimize(iterations=<span class="n">4</span>)
+    print(study.report())</code></pre>
+  </figure>
+
+  <p>The study is given no search, so the system prompt goes to the default block for text, contrastive reflection. This <code class="api">TextValue</code> has no <code>max_chars</code>, so reflection appends what it learned to the prompt; a text with a limit, such as a tool's description, is rewritten within it. <code>study.optimize(iterations=4)</code> measures the baseline (the agent at its defaults) and then up to four rewrites.</p>
+  <p>Reflection's agent runs shell commands over the trial transcripts, so run the example where model-written shell commands are acceptable, such as a devbox or a container. It calls Amazon Bedrock, so it also needs AWS credentials and model access. From the repository root:</p>
+  <pre class="cmd"><code>BYPASS_TOOL_CONSENT=true python examples/optimization/poem_length.py</code></pre>
+
+  <section aria-labelledby="poem-results">
+    <h3 id="poem-results">Results</h3>
+    <div class="prose results"><!-- RESULTS:poem --></div>
+    <figure class="live wide">
+      <figcaption class="bar"><span class="dot" aria-hidden="true"></span><b>Live record</b><span class="sep" aria-hidden="true">·</span><code>poem</code><span class="sep" aria-hidden="true">·</span><span>click any candidate or trial</span></figcaption>
+      <div class="viewer" id="viewer-poem" data-study="poem" data-page="progress"></div>
+    </figure>
+  </section>
+</section>
+
+<section class="major" aria-labelledby="document-reader">
+  <h2 id="document-reader">The document reader</h2>
+  <p>The second study searches every kind of variable at once. The agent, Claude Haiku 4.5 with a 4,000-token context limit, must read a synthetic document page by page. Each of the ten pages buries one digit of a code in filler text, along with the key that unlocks the next page, so the pages can only be read in order. At the end the agent replies with the ticket id from its request and the whole code. The reply earns one point for the ticket id and one for each digit in its place, out of 11.</p>
+  <p>Whether it can do that depends on what its conversation manager keeps. The sliding window keeps the last <code>window_size</code> messages, and reading ten pages takes at least twenty; pinning the first message keeps the request, and its ticket id, in view. The summarizing manager replaces the oldest messages with a summary once the conversation fills 60% of the context window, and a summary can drop a digit.</p>
+  <p>The study rewrites the system prompt and both tools' descriptions by reflection, and uses TPE to choose the manager and tune each manager's settings. It runs in rounds (<code class="api">Nested</code>). Each round proposes a manager, then searches the texts and that manager's settings jointly for four iterations under it. There are two objectives, a higher answer score and fewer tokens, kept as a Pareto front, and two limits: an answer score of at least 0.8, and at most 30,000 tokens per trial on average. Three documents, each run twice, give six trials per candidate.</p>
+
+  <figure class="code" id="code-document-reader">
+    <figcaption class="bar"><span class="path">examples/optimization/document_reader.py</span><span>docstring left out, comments shortened, imports joined</span></figcaption>
+    <pre><code><span class="k">import</span> time
+
+<span class="k">from</span> document_reader_workload <span class="k">import</span> Answer, cases, open_document, read_page
+<span class="k">from</span> strands <span class="k">import</span> Agent
+<span class="k">from</span> strands.agent.conversation_manager <span class="k">import</span> SlidingWindowConversationManager, SummarizingConversationManager
+<span class="k">from</span> strands.models.bedrock <span class="k">import</span> BedrockModel
+
+<span class="k">from</span> strands_evals <span class="k">import</span> Experiment
+<span class="k">from</span> strands_evals.optimization <span class="k">import</span> (
+    <span class="api">TPE</span>, <span class="api">AtLeast</span>, <span class="api">AtMost</span>, <span class="api">Block</span>, <span class="api">Choice</span>, <span class="api">Float</span>, <span class="api">Int</span>, <span class="api">Joint</span>, <span class="api">Maximize</span>, <span class="api">Minimize</span>,
+    <span class="api">Nested</span>, <span class="api">OneOf</span>, <span class="api">Pareto</span>, <span class="api">Reflection</span>, <span class="api">Search</span>, <span class="api">Study</span>, <span class="api">TextValue</span>, <span class="api">component</span>, <span class="api">tool_descriptions</span>, <span class="api">tunable</span>,
+)
+
+<span class="c"># What can be tuned. Each variable is a Python object: the agent's factory uses it below, and so does the search.</span>
+system_prompt = <span class="api">TextValue</span>(default=<span class="s">"Answer the request exactly in the format it asks for."</span>)  <span class="c"># free text</span>
+<span class="c"># One TextValue per tool, each starting from the tool's own description.</span>
+tools = <span class="api">tool_descriptions</span>(open_document, read_page)
+window_size = <span class="api">Int</span>(<span class="n">4</span>, <span class="n">40</span>, default=<span class="n">6</span>)
+pin_first = <span class="api">Choice</span>([<span class="n">0</span>, <span class="n">1</span>], default=<span class="n">0</span>)  <span class="c"># a categorical setting inside one option</span>
+summary_ratio = <span class="api">Float</span>(<span class="n">0.1</span>, <span class="n">0.8</span>, default=<span class="n">0.3</span>)
+preserve_recent = <span class="api">Int</span>(<span class="n">2</span>, <span class="n">12</span>, default=<span class="n">10</span>)
+manager = <span class="api">OneOf</span>(  <span class="c"># a choice between components, each with its own settings</span>
+    <span class="api">component</span>(SlidingWindowConversationManager, window_size=window_size, pin_first=pin_first, per_turn=<span class="k">True</span>),
+    <span class="api">component</span>(
+        SummarizingConversationManager,
+        summary_ratio=summary_ratio,
+        preserve_recent_messages=preserve_recent,
+        proactive_compression={<span class="s">"compression_threshold"</span>: <span class="n">0.6</span>},
+    ),
+    labels=[<span class="s">"sliding_window"</span>, <span class="s">"summarizing"</span>],
+)
+
+
+<span class="d api">@tunable</span>(system_prompt=system_prompt, tools=tools, conversation_manager=manager)
+<span class="k">def</span> <span class="fn">create_reader</span>(system_prompt, tools, conversation_manager):
+    <span class="k">return</span> Agent(
+        model=BedrockModel(model_id=<span class="s">"us.anthropic.claude-haiku-4-5-20251001-v1:0"</span>, context_window_limit=<span class="n">4000</span>),
+        tools=tools,
+        conversation_manager=conversation_manager,
+        system_prompt=system_prompt,
+        callback_handler=<span class="k">None</span>,
+    )
+
+
+<span class="c"># How to search. A block is a method and the variables it proposes.</span>
+choose_manager = <span class="api">Block</span>(<span class="api">TPE</span>(), manager)  <span class="c"># which conversation manager</span>
+tune_manager = <span class="api">Block</span>(<span class="api">TPE</span>(), window_size, pin_first, summary_ratio, preserve_recent)  <span class="c"># the chosen manager's settings</span>
+rewrite_texts = <span class="api">Block</span>(<span class="api">Reflection</span>(), system_prompt, tools)
+search = <span class="api">Search</span>(
+    blocks=[choose_manager, tune_manager, rewrite_texts],
+    <span class="c"># Rounds that each propose a manager, then search the other blocks jointly under it for 4 more iterations.</span>
+    schedule=<span class="api">Nested</span>(outer=choose_manager, inner=<span class="api">Joint</span>(), inner_iterations=<span class="n">4</span>),
+    redraws=<span class="n">3</span>,  <span class="c"># how many more times a step proposes when it repeats a candidate already measured</span>
+)
+
+study = <span class="api">Study</span>(
+    agent=create_reader,
+    experiment=Experiment(cases=cases(), evaluators=[Answer(name=<span class="s">"answer"</span>)]),
+    repetitions=<span class="n">2</span>,
+    objectives=<span class="api">Pareto</span>(<span class="api">Maximize</span>(<span class="s">"answer"</span>), <span class="api">Minimize</span>(<span class="s">"tokens"</span>)),
+    constraints=[<span class="api">AtLeast</span>(<span class="s">"answer"</span>, <span class="n">0.8</span>), <span class="api">AtMost</span>(<span class="s">"tokens"</span>, <span class="n">30_000</span>)],  <span class="c"># any metric; [] for none (the default)</span>
+    search=search,
+    max_concurrency=<span class="n">4</span>,  <span class="c"># trials (a candidate's cases and repetitions) run at once</span>
+    record=<span class="s">f"studies/document-reader-{time.strftime('%Y%m%d-%H%M%S')}"</span>,
+    log=print,
+)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    study.optimize(iterations=<span class="n">10</span>)</code></pre>
+  </figure>
+
+  <p>With <code>iterations=10</code> after the baseline, the schedule runs two rounds of five candidates: each round's opening candidate, which proposes the manager, then four joint steps under it. The full file comments every argument with its default and the alternatives, and <code>document_reader_steps.py</code> builds the same study in six steps, one idea at a time.</p>
+
+  <section aria-labelledby="document-reader-results">
+    <h3 id="document-reader-results">Results</h3>
+    <div class="prose results"><!-- RESULTS:document-reader --></div>
+    <figure class="live wide">
+      <figcaption class="bar"><span class="dot" aria-hidden="true"></span><b>Live record</b><span class="sep" aria-hidden="true">·</span><code>document-reader</code><span class="sep" aria-hidden="true">·</span><span>click any candidate or trial</span></figcaption>
+      <div class="viewer" id="viewer-document-reader" data-study="document-reader" data-page="progress"></div>
+    </figure>
+  </section>
+</section>
+
+<section class="major" aria-labelledby="tau2-airline">
+  <h2 id="tau2-airline">τ²-bench airline</h2>
+  <p>τ²-bench, from Sierra Research, puts a customer-service agent in a conversation with a simulated customer who has a goal, under an airline's written policy and with 14 tools for looking up and changing reservations. Here the agent is Claude Haiku 4.5, a deliberately weak model for this benchmark, and the simulated customer is Claude Sonnet 4.6 for every candidate. Each case is one of τ²'s airline tasks. τ² runs the whole conversation, executes every tool call the agent makes, and scores the result. The reward is 1 when the airline's database ends as the task requires and the agent told the customer what it had to, and 0 otherwise.</p>
+  <p>The study rewrites the agent's instructions and the descriptions of all 14 tools by reflection, and tunes its thinking budget by TPE, from 0 to 16,384 tokens per model call in steps of 1,024. The airline's policy is part of the benchmark and is never tuned; the instructions come before it in the system prompt. The baseline is τ²'s own agent, with its instruction, temperature 0, no thinking, and the tools' own descriptions. The search runs on 10 of τ²'s airline train tasks, one repetition each. Afterwards the baseline and the best candidate run again on 10 of τ²'s test tasks, twice each. The search never saw those tasks.</p>
+
+  <figure class="code" id="code-tau2">
+    <figcaption class="bar"><span class="path">examples/optimization/tau2_airline.py</span><span>docstring left out</span></figcaption>
+    <pre><code><span class="k">import</span> time
+
+<span class="k">from</span> strands <span class="k">import</span> Agent
+<span class="k">from</span> strands.agent.conversation_manager <span class="k">import</span> NullConversationManager
+<span class="k">from</span> strands.models <span class="k">import</span> CacheConfig
+<span class="k">from</span> strands.models.bedrock <span class="k">import</span> BedrockModel
+<span class="k">from</span> tau2_workload <span class="k">import</span> AGENT_INSTRUCTION, Reward, Tau2Task, cases, policy, tools
+
+<span class="k">from</span> strands_evals <span class="k">import</span> Experiment
+<span class="k">from</span> strands_evals.optimization <span class="k">import</span> <span class="api">Int</span>, <span class="api">Maximize</span>, <span class="api">Study</span>, <span class="api">TextValue</span>, <span class="api">tool_descriptions</span>, <span class="api">tunable</span>
+
+POLICY = policy(<span class="s">"airline"</span>)  <span class="c"># the airline's rules, part of the benchmark: never tuned</span>
+
+
+<span class="d api">@tunable</span>(
+    instructions=<span class="api">TextValue</span>(
+        default=AGENT_INSTRUCTION,
+        max_chars=<span class="n">4000</span>,
+        about=<span class="s">"the agent's instructions, given before the airline's policy"</span>,
+    ),
+    tools=<span class="api">tool_descriptions</span>(*tools(<span class="s">"airline"</span>)),  <span class="c"># one text per tool, starting from τ²'s own description</span>
+    thinking_budget=<span class="api">Int</span>(<span class="n">0</span>, <span class="n">16384</span>, step=<span class="n">1024</span>, default=<span class="n">0</span>),  <span class="c"># tokens of thinking per model call; 0 for none</span>
+)
+<span class="k">def</span> <span class="fn">create_agent</span>(instructions, tools, thinking_budget):
+    <span class="k">if</span> thinking_budget:  <span class="c"># thinking runs at the model's own temperature</span>
+        settings = {<span class="s">"additional_request_fields"</span>: {<span class="s">"thinking"</span>: {<span class="s">"type"</span>: <span class="s">"enabled"</span>, <span class="s">"budget_tokens"</span>: thinking_budget}}}
+    <span class="k">else</span>:
+        settings = {<span class="s">"temperature"</span>: <span class="n">0.0</span>}
+    model = BedrockModel(
+        model_id=<span class="s">"us.anthropic.claude-haiku-4-5-20251001-v1:0"</span>,
+        max_tokens=thinking_budget + <span class="n">4096</span>,
+        cache_config=CacheConfig(strategy=<span class="s">"auto"</span>),
+        **settings,
+    )
+    <span class="k">return</span> Agent(
+        model=model,
+        system_prompt=<span class="s">f"&lt;instructions&gt;\n{instructions}\n&lt;/instructions&gt;\n&lt;policy&gt;\n{POLICY}\n&lt;/policy&gt;"</span>,
+        tools=tools,
+        conversation_manager=NullConversationManager(),  <span class="c"># the whole conversation, as τ²'s own agent keeps it</span>
+        callback_handler=<span class="k">None</span>,
+    )
+
+
+study = <span class="api">Study</span>(
+    agent=create_agent,
+    experiment=Experiment(cases=cases(<span class="s">"airline"</span>, <span class="s">"train"</span>, <span class="n">10</span>), evaluators=[Reward(name=<span class="s">"reward"</span>)]),
+    task=Tau2Task(<span class="s">"airline"</span>),  <span class="c"># each trial is one τ² conversation, not one call of the agent</span>
+    objectives=<span class="api">Maximize</span>(<span class="s">"reward"</span>),
+    max_concurrency=<span class="n">10</span>,  <span class="c"># every case at once</span>
+    record=<span class="s">f"studies/tau2-airline-{time.strftime('%Y%m%d-%H%M%S')}"</span>,
+)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    study.optimize(iterations=<span class="n">10</span>)</code></pre>
+  </figure>
+
+  <section aria-labelledby="tau2-task">
+    <h3 id="tau2-task">A trial is a whole conversation</h3>
+    <p>By default a study's task calls the agent once on the case's input. A τ² trial is a conversation of many turns that τ² drives, so the study takes <code>task=Tau2Task("airline")</code>, a callable that receives the agent built for the trial and the case, and returns the output the evaluators score. τ² has to execute every tool call itself, because its evaluator replays those calls against a fresh database. A hook interrupts each call the agent makes, τ² executes it, and τ²'s result resumes the agent.</p>
+    <p>Some conversations fail for reasons outside the agent. The simulated user's model call errors, or τ² ends the conversation with a user or infrastructure error. For those the task raises <code class="api">TrialInvalid</code>. The study records the trial as <code>infrastructure_invalid</code> and runs it again (<code>retries=2</code> by default); if every attempt fails, the trial stays invalid and no average includes it.</p>
+
+    <figure class="code" id="code-tau2-task">
+      <figcaption class="bar"><span class="path">examples/optimization/tau2_workload.py</span><span>the Tau2Task class, unchanged</span></figcaption>
+      <pre><code><span class="k">class</span> <span class="fn">Tau2Task</span>:
+    <span class="s">"""The study's task: one τ² conversation between the agent and τ²'s simulated user, on the case's τ² task."""</span>
+
+    <span class="k">def</span> <span class="fn">__init__</span>(self, domain: str = <span class="s">"airline"</span>, user_llm: str = USER_LLM, max_steps: int = <span class="n">200</span>, max_errors: int = <span class="n">10</span>):
+        self.domain, self.user_llm, self.max_steps, self.max_errors = domain, user_llm, max_steps, max_errors
+
+    <span class="k">def</span> <span class="fn">__call__</span>(self, agent: Any, case: Case) -&gt; dict[str, Any]:
+        task = _task(self.domain, case.metadata[<span class="s">"task_id"</span>])
+        env = build_environment(self.domain)
+        bridge = _Bridge(agent, env.get_tools(), env.get_policy())
+        <span class="k">try</span>:
+            user = build_user(<span class="s">"user_simulator"</span>, env, task, llm=self.user_llm, llm_args={<span class="s">"temperature"</span>: <span class="n">0.0</span>})
+            orchestrator = Orchestrator(
+                domain=self.domain,
+                agent=bridge,
+                user=user,
+                environment=env,
+                task=task,
+                max_steps=self.max_steps,
+                max_errors=self.max_errors,
+            )
+            simulation = orchestrator.run()
+        <span class="k">except</span> Exception <span class="k">as</span> exc:
+            <span class="k">if</span> _user_side(exc):
+                <span class="k">raise</span> <span class="api">TrialInvalid</span>(<span class="s">f"τ²'s simulated user failed: {type(exc).__name__}: {exc}"</span>) <span class="k">from</span> exc
+            <span class="k">raise</span>
+        <span class="k">if</span> simulation.termination_reason <span class="k">in</span> (TerminationReason.USER_ERROR, TerminationReason.INFRASTRUCTURE_ERROR):
+            <span class="k">raise</span> <span class="api">TrialInvalid</span>(<span class="s">f"τ² ended the conversation: {simulation.termination_reason.value}"</span>)
+        <span class="k">return</span> {<span class="s">"output"</span>: Tau2Run(simulation, self.domain)}</code></pre>
+    </figure>
+  </section>
+
+  <section aria-labelledby="tau2-results">
+    <h3 id="tau2-results">Results</h3>
+    <div class="prose results"><!-- RESULTS:tau2 --></div>
+    <figure class="live wide">
+      <figcaption class="bar"><span class="dot" aria-hidden="true"></span><b>Live record</b><span class="sep" aria-hidden="true">·</span><code>tau2</code><span class="sep" aria-hidden="true">·</span><span>click any candidate or trial</span></figcaption>
+      <div class="viewer" id="viewer-tau2" data-study="tau2" data-page="progress"></div>
+    </figure>
+  </section>
+</section>
+
+<section class="major" aria-labelledby="next">
+  <h2 id="next">What's next</h2>
+  <p>Picking winners needs more care. The best candidate's search score is the highest of many noisy estimates, so it overstates how that candidate does on tasks it was not chosen on. In six of the eight τ²-bench studies run so far with <code>tau2_airline_steps.py</code>, the best candidate scored lower on the held-out tasks than in the search. More tasks and repetitions per candidate narrow the intervals. A held-out selection split would choose among the leading candidates on cases the search never saw, and leave a third set for the score we report.</p>
+  <p>Today each block's method proposes its own variables from the same held candidate, and the methods learn from the same results but not from each other's proposals. A joint model-based step is planned to change that. It fits one surrogate over numbers, choices and features of the texts (their rewrite lineage, the rules they contain), with interactions. Reflection would write several text edits in one call, sampling would propose numbers and choices, and Thompson sampling or expected improvement would pick a combination. When the surrogate's diagnostics flag a poor fit, the step falls back to the coordinate search.</p>
+  <p>Packaged benchmarks will come through Harbor. With Strands Evals' Harbor integration, still pending, a candidate becomes one run of a packaged benchmark, each of Harbor's task results becomes a trial, and the agent acts in the task's container. A version of the document reader with each document as a packaged task comes with that integration, and ContextBench and τ² banking are the next workloads planned on it.</p>
+</section>
+
+</article>
+</main>
+
+<footer class="colophon" aria-labelledby="colophon">
+  <h2 id="colophon">Colophon</h2>
+  <dl>
+    <dt>Code</dt>
+    <dd><code>/Users/jonabuck/code/open-harness-eval/upstream/strands-evals-optimization</code>, branch <code>feat/optimization</code> of strands-agents/evals</dd>
+    <dt>Module</dt>
+    <dd><code>strands_evals.optimization</code>, in <code>src/strands_evals/optimization/</code></dd>
+    <dt>Examples</dt>
+    <dd><code>examples/optimization/</code></dd>
+    <dt>Explorer</dt>
+    <dd><code>explorer/</code></dd>
+    <dt>Design</dt>
+    <dd><code>docs/optimization/design.md</code></dd>
+    <dt>Panels</dt>
+    <dd>The live panels are the explorer itself, with each study's record embedded in this page.</dd>
+  </dl>
+  <p><span class="todo">TODO: replace the local path with a link to the published branch or pull request.</span></p>
+</footer>
+
+<!-- SCRIPTS -->
+</body>
+</html>

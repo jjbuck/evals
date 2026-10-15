@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="svg-loop" viewBox="0 0 1000 698" width="100%" role="img" aria-labelledby="svg-loop-title svg-loop-desc">
+<title id="svg-loop-title">The optimization loop</title>
+<desc id="svg-loop-desc">One iteration of a study. 1, the agent: a @tunable factory whose tunable arguments are Python objects: TextValue and tool_descriptions(...) for text, Int, Float and Choice for numbers, OneOf and Switch for a choice between components, SkillLibrary for skills; plain arguments stay fixed. 2, search: the schedule picks which blocks change this iteration; each changing block's method proposes values for its variables (TPE from Optuna for numbers and choices, contrastive reflection for text, skill curation for skill libraries) and every other variable is held at the incumbent, the best candidate so far. 3, the proposed values are a candidate: the factory builds a fresh agent for every trial, the Strands Evals Experiment runs every case and repetition, and its evaluators score each trial; each trial has a status (completed, agent_failure, infrastructure_invalid, verifier_invalid), never a silent zero, and usage is measured (tokens, seconds, model calls). 4, projection: repetitions are averaged within a case, and each metric gets a mean and 95% interval over cases; objectives combine as Pareto, WeightedSum, Chebyshev, Lexicographic or Independent, and constraints (AtMost, AtLeast) limit any metric or a Derived one. 5, feedback: TPE is told the objective values and constraint violations; reflection reads the held candidate's trials, their rewards and transcripts; the incumbent and best set are updated; values already measured are never measured again. 6, every candidate is appended to the record (study.jsonl and transcripts), which the explorer reads.</desc>
+<style>
+#svg-loop text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0b0b0b; }
+#svg-loop .svg-loop-h { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; font-weight: 650; letter-spacing: -0.005em; }
+#svg-loop .svg-loop-sub { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: #52514e; }
+#svg-loop .svg-loop-b { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: #52514e; }
+#svg-loop .svg-loop-bi { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: #0b0b0b; }
+#svg-loop .svg-loop-sm { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; fill: #52514e; }
+#svg-loop .svg-loop-tick { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; fill: #898781; font-variant-numeric: tabular-nums; }
+#svg-loop .svg-loop-num { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 600; fill: #52514e; font-variant-numeric: tabular-nums; }
+#svg-loop .svg-loop-step { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; font-weight: 650; fill: #898781; font-variant-numeric: tabular-nums; }
+#svg-loop .svg-loop-q { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14.5px; font-weight: 600; fill: #0b0b0b; }
+#svg-loop .svg-loop-m { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; fill: #0b0b0b; }
+#svg-loop .svg-loop-m2 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; fill: #52514e; }
+#svg-loop .svg-loop-ms { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; fill: #52514e; }
+#svg-loop .svg-loop-mxs { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; fill: #52514e; }
+#svg-loop .svg-loop-mh { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; fill: #52514e; }
+#svg-loop .svg-loop-mb { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 600; fill: #0b0b0b; }
+#svg-loop .svg-loop-hair { stroke: #e8e7e1; stroke-width: 1; fill: none; }
+#svg-loop .svg-loop-axis { stroke: #c3c2b7; stroke-width: 1; fill: none; }
+#svg-loop .svg-loop-panel { fill: #ffffff; stroke: #e2e1dc; stroke-width: 1; }
+#svg-loop .svg-loop-flow { stroke: #2b2a27; stroke-width: 1.5; fill: none; }
+#svg-loop .svg-loop-link { stroke: #52514e; stroke-width: 1; fill: none; }
+#svg-loop .svg-loop-later { stroke: #898781; stroke-width: 1.3; fill: none; stroke-dasharray: 5 4; }
+</style>
+<defs><marker id="svg-loop-a" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 z" fill="#2b2a27"/></marker><marker id="svg-loop-a2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 z" fill="#52514e"/></marker><marker id="svg-loop-a3" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0.8 L10,5 L0,9.2 z" fill="#898781"/></marker></defs>
+<text x="24" y="78" class="svg-loop-h"><tspan class="svg-loop-step">1</tspan><tspan dx="8">The agent</tspan></text>
+<text x="24" y="100" class="svg-loop-b">a <tspan class="svg-loop-m">@tunable</tspan> factory; its tunable</text>
+<text x="24" y="118" class="svg-loop-b">arguments are Python objects</text>
+<rect x="24" y="138.5" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="42" y="148" class="svg-loop-bi">text</text>
+<text x="114" y="148" class="svg-loop-m">TextValue</text>
+<text x="114" y="172" class="svg-loop-m">tool_descriptions(…)</text>
+<rect x="24" y="186.5" width="10" height="10" rx="2" fill="#1baf7a"/>
+<text x="42" y="196" class="svg-loop-bi">numbers</text>
+<text x="114" y="196" class="svg-loop-m">Int  Float  Choice</text>
+<rect x="24" y="210.5" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="42" y="220" class="svg-loop-bi">structure</text>
+<text x="114" y="220" class="svg-loop-m">OneOf  Switch</text>
+<rect x="24" y="234.5" width="10" height="10" rx="2" fill="#eda100"/>
+<text x="42" y="244" class="svg-loop-bi">skills</text>
+<text x="114" y="244" class="svg-loop-m">SkillLibrary</text>
+<text x="24" y="276" class="svg-loop-b">Plain arguments stay fixed.</text>
+<rect x="328" y="58" width="300" height="292" rx="10" class="svg-loop-panel"/>
+<text x="344" y="86" class="svg-loop-h"><tspan class="svg-loop-step">2</tspan><tspan dx="8">Search proposes</tspan></text>
+<text x="344" y="106" class="svg-loop-ms">Search(blocks=…, schedule=…)</text>
+<rect x="571" y="118" width="21" height="62" rx="3" fill="rgba(11,11,11,0.05)"/>
+<text x="581.5" y="113" class="svg-loop-tick" text-anchor="middle">now</text>
+<rect x="344" y="125" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="361" y="130" class="svg-loop-ms" dy="0.34em">structure</text>
+<line x1="446" y1="130" x2="614" y2="130" class="svg-loop-hair"/>
+<rect x="451" y="124.5" width="11" height="11" rx="2.5" fill="#2a78d6"/>
+<rect x="556" y="124.5" width="11" height="11" rx="2.5" fill="#2a78d6"/>
+<rect x="344" y="143" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="361" y="148" class="svg-loop-ms" dy="0.34em">text</text>
+<line x1="446" y1="148" x2="614" y2="148" class="svg-loop-hair"/>
+<rect x="472" y="142.5" width="11" height="11" rx="2.5" fill="#eb6834"/>
+<rect x="493" y="142.5" width="11" height="11" rx="2.5" fill="#eb6834"/>
+<rect x="514" y="142.5" width="11" height="11" rx="2.5" fill="#eb6834"/>
+<rect x="535" y="142.5" width="11" height="11" rx="2.5" fill="#eb6834"/>
+<rect x="577" y="142.5" width="11" height="11" rx="2.5" fill="#eb6834"/>
+<rect x="344" y="161" width="10" height="10" rx="2" fill="#1baf7a"/>
+<text x="361" y="166" class="svg-loop-ms" dy="0.34em">numbers</text>
+<line x1="446" y1="166" x2="614" y2="166" class="svg-loop-hair"/>
+<rect x="472" y="160.5" width="11" height="11" rx="2.5" fill="#1baf7a"/>
+<rect x="493" y="160.5" width="11" height="11" rx="2.5" fill="#1baf7a"/>
+<rect x="514" y="160.5" width="11" height="11" rx="2.5" fill="#1baf7a"/>
+<rect x="535" y="160.5" width="11" height="11" rx="2.5" fill="#1baf7a"/>
+<rect x="577" y="160.5" width="11" height="11" rx="2.5" fill="#1baf7a"/>
+<text x="344" y="198" class="svg-loop-b">The schedule picks the blocks that change;</text>
+<text x="344" y="216" class="svg-loop-b">each one's method proposes its variables,</text>
+<text x="344" y="234" class="svg-loop-b">and the rest stay at the incumbent, the</text>
+<text x="344" y="252" class="svg-loop-b">best candidate so far.</text>
+<rect x="344" y="270.5" width="10" height="10" rx="2" fill="#2a78d6"/>
+<rect x="357" y="270.5" width="10" height="10" rx="2" fill="#1baf7a"/>
+<text x="378" y="280" class="svg-loop-b"><tspan class="svg-loop-m">TPE</tspan> (Optuna): numbers, choices</text>
+<rect x="344" y="290.5" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="378" y="300" class="svg-loop-b"><tspan class="svg-loop-m">Reflection</tspan> rewrites text</text>
+<rect x="344" y="310.5" width="10" height="10" rx="2" fill="#eda100"/>
+<text x="378" y="320" class="svg-loop-b"><tspan class="svg-loop-m">SkillCuration</tspan> curates skills</text>
+<rect x="692" y="58" width="284" height="292" rx="10" class="svg-loop-panel"/>
+<text x="708" y="86" class="svg-loop-h"><tspan class="svg-loop-step">3</tspan><tspan dx="8">Measure the candidate</tspan></text>
+<rect x="708" y="110" width="44" height="9" rx="2" fill="#eb6834"/>
+<rect x="708" y="123" width="44" height="9" rx="2" fill="#1baf7a"/>
+<rect x="708.5" y="136.5" width="43" height="8" rx="2" fill="#ffffff" stroke="#c3c2b7"/>
+<rect x="708.5" y="149.5" width="43" height="8" rx="2" fill="#ffffff" stroke="#c3c2b7"/>
+<rect x="708.5" y="162.5" width="43" height="8" rx="2" fill="#ffffff" stroke="#c3c2b7"/>
+<text x="760" y="123" class="svg-loop-sm" dy="0.1em">proposed</text>
+<text x="760" y="155" class="svg-loop-sm" dy="0.1em">held</text>
+<text x="708" y="189" class="svg-loop-sm">candidate</text>
+<path d="M822,141H850" class="svg-loop-link" marker-end="url(#svg-loop-a2)"/>
+<rect x="860" y="110" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="877" y="110" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="894" y="110" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="860" y="127" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="877.5" y="127.5" width="12" height="12" rx="2" fill="#ffffff" stroke="#2b2a27"/><path d="M880,130L887,137M880,137L887,130" stroke="#2b2a27" stroke-width="1.4"/>
+<rect x="894" y="127" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="860" y="144" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="877" y="144" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="894.5" y="144.5" width="12" height="12" rx="2" fill="none" stroke="#898781" stroke-dasharray="2 2"/>
+<rect x="860" y="161" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="877" y="161" width="13" height="13" rx="2" fill="#2b2a27"/>
+<rect x="894" y="161" width="13" height="13" rx="2" fill="#2b2a27"/>
+<text x="860" y="189" class="svg-loop-sm">trials</text>
+<rect x="708.5" y="209.5" width="11" height="11" rx="2" fill="#2b2a27"/>
+<text x="726" y="215" class="svg-loop-ms" dy="0.34em">completed</text>
+<rect x="811" y="210" width="10" height="10" rx="2" fill="#ffffff" stroke="#2b2a27"/><path d="M813.5,212.5L818.5,217.5M813.5,217.5L818.5,212.5" stroke="#2b2a27" stroke-width="1.4"/>
+<text x="828" y="215" class="svg-loop-ms" dy="0.34em">agent_failure</text>
+<rect x="709" y="230" width="10" height="10" rx="2" fill="none" stroke="#898781" stroke-dasharray="2 2"/>
+<text x="726" y="235" class="svg-loop-ms" dy="0.34em">infrastructure_invalid</text>
+<text x="726" y="253" class="svg-loop-ms" dy="0.34em">verifier_invalid</text>
+<text x="708" y="281" class="svg-loop-b">Each case runs once per repetition, with a</text>
+<text x="708" y="299" class="svg-loop-b">fresh agent; the Experiment's evaluators</text>
+<text x="708" y="317" class="svg-loop-b">score every trial, and usage is measured.</text>
+<text x="708" y="335" class="svg-loop-b">A failure is a status, never a silent zero.</text>
+<rect x="692" y="406" width="284" height="276" rx="10" class="svg-loop-panel"/>
+<text x="708" y="434" class="svg-loop-h"><tspan class="svg-loop-step">4</tspan><tspan dx="8">Project</tspan></text>
+<rect x="786" y="466" width="84" height="44" fill="rgba(208, 59, 59, 0.07)"/>
+<line x1="870" y1="462" x2="870" y2="512" stroke="#d03b3b" stroke-width="1.5"/>
+<text x="865" y="460" class="svg-loop-mxs" text-anchor="end">AtLeast(answer, 0.8)</text>
+<text x="708" y="478" class="svg-loop-sm" dy="0.34em">case means</text>
+<circle cx="886.8" cy="478" r="3.5" fill="#898781" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="903.6" cy="478" r="3.5" fill="#898781" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="912" cy="478" r="3.5" fill="#898781" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="928.8" cy="478" r="3.5" fill="#898781" stroke="#ffffff" stroke-width="1.5"/>
+<text x="708" y="498" class="svg-loop-sm" dy="0.34em">mean, 95%</text>
+<line x1="878.4" y1="498" x2="937.2" y2="498" stroke="#2b2a27" stroke-width="2" stroke-linecap="round"/>
+<circle cx="907.8" cy="498" r="4.5" fill="#2b2a27" stroke="#ffffff" stroke-width="2"/>
+<line x1="786" y1="514" x2="954" y2="514" class="svg-loop-axis"/>
+<text x="786" y="529" class="svg-loop-tick" text-anchor="middle">0.6</text>
+<text x="870" y="529" class="svg-loop-tick" text-anchor="middle">0.8</text>
+<text x="954" y="529" class="svg-loop-tick" text-anchor="middle">1</text>
+<text x="708" y="529" class="svg-loop-sm">answer</text>
+<text x="708" y="556" class="svg-loop-b">Repetitions are averaged within a case,</text>
+<text x="708" y="574" class="svg-loop-b">and the case is the unit. Objectives</text>
+<text x="708" y="592" class="svg-loop-b">combine as one of</text>
+<text x="708" y="610" class="svg-loop-m">Pareto, WeightedSum, Chebyshev,</text>
+<text x="708" y="628" class="svg-loop-m">Lexicographic, Independent.</text>
+<text x="708" y="650" class="svg-loop-b"><tspan class="svg-loop-m">AtMost</tspan> and <tspan class="svg-loop-m">AtLeast</tspan> limit any metric,</text>
+<text x="708" y="668" class="svg-loop-b">or a <tspan class="svg-loop-m">Derived</tspan> one.</text>
+<rect x="328" y="406" width="300" height="276" rx="10" class="svg-loop-panel"/>
+<text x="344" y="434" class="svg-loop-h"><tspan class="svg-loop-step">5</tspan><tspan dx="8">Feedback</tspan></text>
+<rect x="344" y="454.5" width="10" height="10" rx="2" fill="#2a78d6"/>
+<rect x="357" y="454.5" width="10" height="10" rx="2" fill="#1baf7a"/>
+<text x="376" y="464" class="svg-loop-b"><tspan class="svg-loop-m">TPE</tspan> is told the objective values</text>
+<text x="376" y="482" class="svg-loop-b">and the constraint violations.</text>
+<rect x="344" y="502.5" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="376" y="512" class="svg-loop-b"><tspan class="svg-loop-m">Reflection</tspan> reads the held candidate's</text>
+<text x="376" y="530" class="svg-loop-b">trials: rewards and transcripts.</text>
+<text x="344" y="562" class="svg-loop-b">The incumbent and the best set are updated.</text>
+<text x="344" y="580" class="svg-loop-b">Values already measured are never measured</text>
+<text x="344" y="598" class="svg-loop-b">again: the method is told their result and</text>
+<text x="344" y="616" class="svg-loop-b">proposes again.</text>
+<text x="24" y="434" class="svg-loop-h"><tspan class="svg-loop-step">6</tspan><tspan dx="8">The record</tspan></text>
+<text x="24" y="464" class="svg-loop-m">study.jsonl</text>
+<text x="24" y="482" class="svg-loop-sm">an event log: every candidate,</text>
+<text x="24" y="499" class="svg-loop-sm">appended as it finishes</text>
+<text x="24" y="530" class="svg-loop-m">transcripts/&lt;hash&gt;.json</text>
+<text x="24" y="548" class="svg-loop-sm">each trial's messages, stored once</text>
+<text x="24" y="580" class="svg-loop-b">The explorer reads the record;</text>
+<text x="24" y="598" class="svg-loop-b">it shows facts and infers nothing.</text>
+<path d="M628,148H690" class="svg-loop-flow" marker-end="url(#svg-loop-a)"/>
+<text x="660" y="140" class="svg-loop-sm" text-anchor="middle">values</text>
+<path d="M834.0,350V404" class="svg-loop-flow" marker-end="url(#svg-loop-a)"/>
+<text x="844" y="382" class="svg-loop-sm">trials</text>
+<path d="M692,526H630" class="svg-loop-flow" marker-end="url(#svg-loop-a)"/>
+<text x="660" y="518" class="svg-loop-sm" text-anchor="middle">estimates</text>
+<path d="M478.0,406V352" class="svg-loop-flow" marker-end="url(#svg-loop-a)"/>
+<text x="488" y="382" class="svg-loop-sm">next iteration</text>
+<path d="M270,148H326" class="svg-loop-link" marker-end="url(#svg-loop-a2)"/>
+<text x="299" y="140" class="svg-loop-sm" text-anchor="middle">variables</text>
+<path d="M84,62V32H834.0V56" class="svg-loop-link" marker-end="url(#svg-loop-a2)"/>
+<text x="478" y="26" class="svg-loop-sm" text-anchor="middle">the factory builds a fresh agent for every trial</text>
+<path d="M328,526H270" class="svg-loop-link" marker-end="url(#svg-loop-a2)"/>
+<text x="299" y="518" class="svg-loop-sm" text-anchor="middle">append</text>
+</svg>

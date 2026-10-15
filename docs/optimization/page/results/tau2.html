@@ -1,0 +1,12 @@
+<p>On the 10 train tasks, τ²'s own agent (Haiku 4.5, temperature 0, no thinking) solved 7. Over ten iterations the search held between 0.6 and 0.9, and the best, candidate 6, solved 9: a thinking budget of 7,168 tokens, instructions grown from 306 to 1,771 characters, and five rewritten tool descriptions. Its rewrite added rules such as <q>Transfer immediately after explaining policy limitations</q> and <q>Avoid repeated tool calls</q>, drawn from the train conversations it read.</p>
+<p>A best of ten candidates scored on ten tasks, once each, is partly luck, so the study re-ran the baseline and candidate 6 on 10 held-out test tasks, twice each, with <code>held_out()</code> from <code>tau2_airline_steps.py</code>. The explorer does not read that check, so here it is:</p>
+<table>
+  <thead><tr><th>held out, 10 tasks × 2</th><th>reward</th><th>95% interval</th><th>tokens per conversation</th></tr></thead>
+  <tbody>
+    <tr><td>baseline</td><td>0.70</td><td>0.40 – 1.00</td><td>80,174</td></tr>
+    <tr><td>candidate 6</td><td>0.85</td><td>0.61 – 1.00</td><td>87,270</td></tr>
+  </tbody>
+</table>
+<p>Candidate 6 now solves two tasks the baseline failed in both runs (35 and 48) and a third it solved once (31), and loses one it solved once (24) and one run of another (19). That is 17 of 20 against 14, a gain that holds up on tasks the search never saw, though the intervals still overlap. In every earlier τ² study whose best candidate beat the baseline on held-out tasks, that candidate had thinking on; the one study that tuned only the instructions did worse held out (0.60 to 0.50).</p>
+<p>The search was not cheap. Each rewrite read ten conversations and rewrote up to fifteen texts, about 1.6 million reflection tokens per iteration and 15.6 million in all, more than the agent itself used across every trial.</p>
+<p>In the panel, the Progress tab shows each candidate's reward with its interval. Open candidate 6 for its instructions and tool descriptions as a diff against the candidate it was rewritten from, and any trial for the full conversation with τ²'s simulated user, tool calls included.</p>
